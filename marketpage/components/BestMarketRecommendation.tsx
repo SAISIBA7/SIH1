@@ -2,7 +2,7 @@
 
 import React from "react";
 import { CropMarketInfo, Market } from "../types";
-import { calculateNetRealization, formatCurrency, formatNumber } from "../marketService";
+import { calculateNetRealization, formatCurrency } from "../marketService";
 
 interface BestMarketRecommendationProps {
   currentCrop: CropMarketInfo;

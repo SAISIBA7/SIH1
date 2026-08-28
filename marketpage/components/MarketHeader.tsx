@@ -20,15 +20,14 @@ export const MarketHeader: React.FC<MarketHeaderProps> = ({
   crops,
   selectedCropId,
   onSelectCrop,
-  lastUpdatedTime,
+  lastUpdatedTime: _lastUpdatedTime,
   onRefresh,
   isRefreshing,
   onOpenCompareAll,
   isLiveApi = true,
-  apiSource = "Data.gov.in (Agmarknet Live API)",
+  apiSource: _apiSource,
   totalRecords = 0,
 }) => {
-  const currentCrop = crops.find((c) => c.id === selectedCropId) || crops[0];
 
   return (
     <header className="sticky top-0 z-30 bg-white/85 backdrop-blur-xl border-b border-emerald-900/10 px-3 sm:px-6 lg:px-8 py-2.5 sm:py-3.5 shadow-xs transition-all">

@@ -1,0 +1,477 @@
+'use client';
+
+import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { Sprout, ShieldCheck, Building2, User, Phone, MapPin, CheckCircle, ArrowRight, Loader2, Sparkles } from 'lucide-react';
+
+export default function OnboardingPage() {
+  const router = useRouter();
+  const [role, setRole] = useState<'farmer' | 'admin' | 'bank'>('farmer');
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+
+  // Farmer form state matching DB schema
+  const [farmerForm, setFarmerForm] = useState({
+    name: 'Ramesh Mohanty',
+    phone: '+91 94371 88291',
+    district: 'Mayurbhanj',
+    village: 'Baripada Rural',
+    language: 'or',
+    land_area: '4.8',
+    loan_amount: '50000',
+    crop_name: 'Paddy (Swarna)',
+    crop_stage: 'Vegetative - Tillering',
+    sowing_date: '2026-06-15'
+  });
+
+  // Admin / Officer form state
+  const [officerForm, setOfficerForm] = useState({
+    name: 'Dr. Debabrata Jena',
+    phone: '+91 98610 99881',
+    district: 'Mayurbhanj',
+    designation: 'Senior Agriculture Officer',
+    department: 'Department of Agriculture & Farmers Empowerment'
+  });
+
+  // Bank / Insurer form state
+  const [bankForm, setBankForm] = useState({
+    name: 'Subhashree Nayak',
+    phone: '+91 97761 44332',
+    bank_name: 'State Bank of India - Krishi Vikas Branch',
+    district: 'Mayurbhanj',
+    branch_code: 'SBI0004123',
+    designation: 'Agricultural Field Officer (AFO)'
+  });
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      if (role === 'farmer') {
+        const farmerId = `farmer-${Date.now()}`;
+        
+        // 1. Create Farmer in DB
+        const farmerRes = await fetch('/api/farmers', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: farmerId,
+            name: farmerForm.name,
+            phone: farmerForm.phone,
+            district: farmerForm.district,
+            village: farmerForm.village,
+            language: farmerForm.language,
+            land_area: parseFloat(farmerForm.land_area) || 0,
+            loan_amount: parseFloat(farmerForm.loan_amount) || 0,
+          })
+        });
+        await farmerRes.json();
+
+        // 2. Create Crop in DB
+        if (farmerForm.crop_name) {
+          await fetch('/api/crops', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              id: `crop-${Date.now()}`,
+              farmer_id: farmerId,
+              name: farmerForm.crop_name,
+              stage: farmerForm.crop_stage,
+              sowing_date: farmerForm.sowing_date
+            })
+          });
+        }
+
+        // 3. Save Profile
+        await fetch('/api/profile', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: 'user-active',
+            name: farmerForm.name,
+            email: 'farmer@smartcrop.in',
+            role: 'farmer',
+            phone: farmerForm.phone,
+            district: farmerForm.district,
+            village: farmerForm.village,
+            language: farmerForm.language,
+            land_area: parseFloat(farmerForm.land_area) || 0,
+            loan_amount: parseFloat(farmerForm.loan_amount) || 0,
+          })
+        });
+
+        setSuccess(true);
+        setTimeout(() => {
+          router.push('/farmer-profile');
+        }, 1200);
+
+      } else if (role === 'admin') {
+        await fetch('/api/profile', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: 'officer-active',
+            name: officerForm.name,
+            email: 'officer@agri.gov.in',
+            role: 'admin',
+            phone: officerForm.phone,
+            district: officerForm.district,
+            designation: officerForm.designation
+          })
+        });
+
+        setSuccess(true);
+        setTimeout(() => {
+          router.push('/agriculture-officer-dashboard');
+        }, 1200);
+
+      } else {
+        await fetch('/api/profile', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: 'banker-active',
+            name: bankForm.name,
+            email: 'afo@sbi.co.in',
+            role: 'bank',
+            phone: bankForm.phone,
+            district: bankForm.district,
+            bank_name: bankForm.bank_name,
+            designation: bankForm.designation
+          })
+        });
+
+        setSuccess(true);
+        setTimeout(() => {
+          router.push('/insurance');
+        }, 1200);
+      }
+    } catch (err) {
+      console.error('Onboarding submission error:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-zinc-900 to-emerald-950 text-white flex flex-col justify-center items-center p-4 sm:p-6 md:p-10">
+      
+      {/* Background ambient glowing spheres */}
+      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-teal-500/10 rounded-full blur-3xl pointer-events-none" />
+
+      <div className="relative z-10 w-full max-w-3xl bg-zinc-900/80 backdrop-blur-xl border border-white/10 rounded-3xl p-6 sm:p-10 shadow-2xl shadow-black/60">
+        
+        {/* Header */}
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold uppercase tracking-wider mb-3">
+            <Sparkles className="w-3.5 h-3.5" />
+            Smart Crop Ecosystem Setup
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+            Complete Your Role Profile
+          </h1>
+          <p className="text-sm text-zinc-400 mt-2 max-w-md mx-auto">
+            Your information is automatically synced to AWS RDS MySQL to personalize your intelligence portal and market data.
+          </p>
+        </div>
+
+        {/* Role Selection Tabs */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-8">
+          <button
+            type="button"
+            onClick={() => setRole('farmer')}
+            className={`flex flex-col items-center text-center p-4 rounded-2xl border transition-all duration-200 ${
+              role === 'farmer'
+                ? 'bg-emerald-600/20 border-emerald-500 ring-2 ring-emerald-500/30 text-white'
+                : 'bg-white/5 border-white/10 hover:bg-white/10 text-zinc-400 hover:text-zinc-200'
+            }`}
+          >
+            <div className={`p-2.5 rounded-xl mb-2.5 ${role === 'farmer' ? 'bg-emerald-500 text-white' : 'bg-white/10 text-zinc-300'}`}>
+              <Sprout className="w-5 h-5" />
+            </div>
+            <span className="text-sm font-bold">Farmer</span>
+            <span className="text-xs text-zinc-400 mt-0.5">Crop, Farm & Mandi</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setRole('admin')}
+            className={`flex flex-col items-center text-center p-4 rounded-2xl border transition-all duration-200 ${
+              role === 'admin'
+                ? 'bg-teal-600/20 border-teal-500 ring-2 ring-teal-500/30 text-white'
+                : 'bg-white/5 border-white/10 hover:bg-white/10 text-zinc-400 hover:text-zinc-200'
+            }`}
+          >
+            <div className={`p-2.5 rounded-xl mb-2.5 ${role === 'admin' ? 'bg-teal-500 text-white' : 'bg-white/10 text-zinc-300'}`}>
+              <ShieldCheck className="w-5 h-5" />
+            </div>
+            <span className="text-sm font-bold">Agriculture Officer</span>
+            <span className="text-xs text-zinc-400 mt-0.5">District Monitoring</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setRole('bank')}
+            className={`flex flex-col items-center text-center p-4 rounded-2xl border transition-all duration-200 ${
+              role === 'bank'
+                ? 'bg-blue-600/20 border-blue-500 ring-2 ring-blue-500/30 text-white'
+                : 'bg-white/5 border-white/10 hover:bg-white/10 text-zinc-400 hover:text-zinc-200'
+            }`}
+          >
+            <div className={`p-2.5 rounded-xl mb-2.5 ${role === 'bank' ? 'bg-blue-500 text-white' : 'bg-white/10 text-zinc-300'}`}>
+              <Building2 className="w-5 h-5" />
+            </div>
+            <span className="text-sm font-bold">Bank & Insurance</span>
+            <span className="text-xs text-zinc-400 mt-0.5">KCC & PMFBY Claims</span>
+          </button>
+        </div>
+
+        {/* Dynamic Form based on selected Role */}
+        <form onSubmit={handleSubmit} className="space-y-5">
+          {role === 'farmer' && (
+            <div className="space-y-4">
+              <div className="border-b border-white/10 pb-2 flex items-center justify-between">
+                <span className="text-xs font-bold text-emerald-400 uppercase tracking-wider">Farmer Personal & Land Schema</span>
+                <span className="text-xs text-zinc-400">AWS RDS: `farmers` + `crops`</span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-medium text-zinc-300 mb-1.5">Full Name (name)</label>
+                  <div className="relative">
+                    <User className="absolute left-3.5 top-3 w-4 h-4 text-zinc-400" />
+                    <input
+                      type="text"
+                      required
+                      value={farmerForm.name}
+                      onChange={e => setFarmerForm({ ...farmerForm, name: e.target.value })}
+                      className="w-full bg-white/5 border border-white/10 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder-zinc-500 outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-zinc-300 mb-1.5">Phone Number (phone)</label>
+                  <div className="relative">
+                    <Phone className="absolute left-3.5 top-3 w-4 h-4 text-zinc-400" />
+                    <input
+                      type="text"
+                      required
+                      value={farmerForm.phone}
+                      onChange={e => setFarmerForm({ ...farmerForm, phone: e.target.value })}
+                      className="w-full bg-white/5 border border-white/10 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder-zinc-500 outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-zinc-300 mb-1.5">District (district)</label>
+                  <div className="relative">
+                    <MapPin className="absolute left-3.5 top-3 w-4 h-4 text-zinc-400" />
+                    <input
+                      type="text"
+                      required
+                      value={farmerForm.district}
+                      onChange={e => setFarmerForm({ ...farmerForm, district: e.target.value })}
+                      className="w-full bg-white/5 border border-white/10 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder-zinc-500 outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-zinc-300 mb-1.5">Village / Gram Panchayat (village)</label>
+                  <input
+                    type="text"
+                    required
+                    value={farmerForm.village}
+                    onChange={e => setFarmerForm({ ...farmerForm, village: e.target.value })}
+                    className="w-full bg-white/5 border border-white/10 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 rounded-xl px-4 py-2.5 text-sm text-white placeholder-zinc-500 outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-zinc-300 mb-1.5">Total Land Area in Acres (land_area)</label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    required
+                    value={farmerForm.land_area}
+                    onChange={e => setFarmerForm({ ...farmerForm, land_area: e.target.value })}
+                    className="w-full bg-white/5 border border-white/10 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 rounded-xl px-4 py-2.5 text-sm text-white placeholder-zinc-500 outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-zinc-300 mb-1.5">Active Loan Amount in ₹ (loan_amount)</label>
+                  <input
+                    type="number"
+                    step="1000"
+                    value={farmerForm.loan_amount}
+                    onChange={e => setFarmerForm({ ...farmerForm, loan_amount: e.target.value })}
+                    className="w-full bg-white/5 border border-white/10 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 rounded-xl px-4 py-2.5 text-sm text-white placeholder-zinc-500 outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-zinc-300 mb-1.5">Current Primary Crop (crops.name)</label>
+                  <input
+                    type="text"
+                    required
+                    value={farmerForm.crop_name}
+                    onChange={e => setFarmerForm({ ...farmerForm, crop_name: e.target.value })}
+                    className="w-full bg-white/5 border border-white/10 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 rounded-xl px-4 py-2.5 text-sm text-white placeholder-zinc-500 outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-zinc-300 mb-1.5">Crop Stage (crops.stage)</label>
+                  <select
+                    value={farmerForm.crop_stage}
+                    onChange={e => setFarmerForm({ ...farmerForm, crop_stage: e.target.value })}
+                    className="w-full bg-zinc-800 border border-white/10 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 rounded-xl px-4 py-2.5 text-sm text-white outline-none"
+                  >
+                    <option value="Sowing & Germination">Sowing & Germination</option>
+                    <option value="Vegetative - Tillering">Vegetative - Tillering</option>
+                    <option value="Panicle Initiation / Flowering">Panicle Initiation / Flowering</option>
+                    <option value="Grain Filling">Grain Filling</option>
+                    <option value="Harvesting Ready">Harvesting Ready</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {role === 'admin' && (
+            <div className="space-y-4">
+              <div className="border-b border-white/10 pb-2">
+                <span className="text-xs font-bold text-teal-400 uppercase tracking-wider">Officer Credentials</span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-medium text-zinc-300 mb-1.5">Officer Name</label>
+                  <input
+                    type="text"
+                    required
+                    value={officerForm.name}
+                    onChange={e => setOfficerForm({ ...officerForm, name: e.target.value })}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white outline-none focus:border-teal-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-zinc-300 mb-1.5">Official Phone</label>
+                  <input
+                    type="text"
+                    required
+                    value={officerForm.phone}
+                    onChange={e => setOfficerForm({ ...officerForm, phone: e.target.value })}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white outline-none focus:border-teal-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-zinc-300 mb-1.5">Jurisdiction District</label>
+                  <input
+                    type="text"
+                    required
+                    value={officerForm.district}
+                    onChange={e => setOfficerForm({ ...officerForm, district: e.target.value })}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white outline-none focus:border-teal-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-zinc-300 mb-1.5">Designation</label>
+                  <input
+                    type="text"
+                    required
+                    value={officerForm.designation}
+                    onChange={e => setOfficerForm({ ...officerForm, designation: e.target.value })}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white outline-none focus:border-teal-500"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {role === 'bank' && (
+            <div className="space-y-4">
+              <div className="border-b border-white/10 pb-2">
+                <span className="text-xs font-bold text-blue-400 uppercase tracking-wider">Bank & Insurer Information</span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-medium text-zinc-300 mb-1.5">Officer Name</label>
+                  <input
+                    type="text"
+                    required
+                    value={bankForm.name}
+                    onChange={e => setBankForm({ ...bankForm, name: e.target.value })}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white outline-none focus:border-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-zinc-300 mb-1.5">Bank / Insurer Organization</label>
+                  <input
+                    type="text"
+                    required
+                    value={bankForm.bank_name}
+                    onChange={e => setBankForm({ ...bankForm, bank_name: e.target.value })}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white outline-none focus:border-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-zinc-300 mb-1.5">Branch Code / IFSC</label>
+                  <input
+                    type="text"
+                    required
+                    value={bankForm.branch_code}
+                    onChange={e => setBankForm({ ...bankForm, branch_code: e.target.value })}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white outline-none focus:border-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-zinc-300 mb-1.5">Designation</label>
+                  <input
+                    type="text"
+                    required
+                    value={bankForm.designation}
+                    onChange={e => setBankForm({ ...bankForm, designation: e.target.value })}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white outline-none focus:border-blue-500"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Submit Button */}
+          <button
+            type="submit"
+            disabled={loading || success}
+            className={`w-full flex items-center justify-center gap-2 py-3.5 px-6 rounded-2xl font-bold text-white shadow-lg transition-all duration-300 ${
+              success
+                ? 'bg-emerald-600'
+                : 'bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-500 hover:from-emerald-500 hover:to-teal-500 shadow-emerald-500/25 active:scale-[0.99]'
+            }`}
+          >
+            {loading ? (
+              <>
+                <Loader2 className="w-5 h-5 animate-spin" />
+                <span>Storing into AWS RDS MySQL...</span>
+              </>
+            ) : success ? (
+              <>
+                <CheckCircle className="w-5 h-5" />
+                <span>Saved! Redirecting to your Dashboard...</span>
+              </>
+            ) : (
+              <>
+                <span>Save Profile & Enter Platform</span>
+                <ArrowRight className="w-5 h-5" />
+              </>
+            )}
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}

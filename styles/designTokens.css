@@ -1,0 +1,37 @@
+/* Design tokens derived from PRD */
+:root {
+  --bg-base: #F2F2EF;
+  --glass-panel: rgba(255,255,255,0.6);
+  --glass-border: rgba(255,255,255,0.7);
+  --focus-dark: #1A1A1A;
+  --accent-lime: #CFE362;
+  --text-primary: #1A1A1A;
+  --text-secondary: #8C8C88;
+  --risk-red: #E4574B;
+  --risk-yellow: #F0B942;
+  --risk-green: #6FBF73;
+  --radius-lg: 28px;
+  --radius-md: 16px;
+  --shadow-soft: 0 8px 24px rgba(0,0,0,0.06);
+}
+
+/* Utility classes */
+.glass {
+  background: var(--glass-panel);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-soft);
+}
+
+.focus-card {
+  background: var(--focus-dark);
+  color: #fff;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-soft);
+}
+
+.lime-accent {
+  background-color: var(--accent-lime);
+  color: var(--text-primary);
+}

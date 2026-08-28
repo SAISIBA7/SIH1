@@ -1,10 +1,10 @@
 import FarmerProfilePage from "@/farmer profile/farmer profile";
 
 export const metadata = {
-  title: "Farmer Profile & Precision Farm Intelligence | Hecta Smart Crop",
-  description: "Automated crop telemetry, real-time stress surveillance, drone soil scanning, and multilingual advisories.",
+  title: "Smart Crop | Farmer Profile & Land Records",
+  description: "Farmer Identity, RoR Land Records, Soil Health Card & Linked KCC Accounts.",
 };
 
-export default function FarmerProfileRoute() {
+export default function Page() {
   return <FarmerProfilePage />;
 }

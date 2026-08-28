@@ -21,8 +21,7 @@ export default function InsurancePage() {
   const [status, setStatus] = useState<InsuranceState>("NOT_REGISTERED");
   const [farmer, setFarmer] = useState<FarmerProfile>(mockFarmer);
   const [documents, setDocuments] = useState<DocumentItem[]>(initialDocuments);
-  const [activeView, setActiveView] = useState<"dashboard" | "schemes" | "schemeDetails" | "stepper">("dashboard");
-  const [selectedScheme, setSelectedScheme] = useState<BankScheme | null>(null);
+  const [activeView, setActiveView] = useState<"dashboard" | "stepper">("dashboard");
   const [isEditingParcel, setIsEditingParcel] = useState(false);
   const [showRulesModal, setShowRulesModal] = useState(false);
   const [showLossReported, setShowLossReported] = useState(false);
@@ -233,7 +232,7 @@ export default function InsurancePage() {
                             </span>
                             <span className="font-bold text-gray-800">{label}: {value}</span>
                           </div>
-                        )).slice(0,1)}
+                        )).slice(0, 1)}
                         <div className="flex flex-wrap items-center gap-2 pt-1">
                           <span className="px-2.5 py-1 rounded-lg bg-white border border-gray-200 font-extrabold text-gray-900 text-xs">&#10003; State: {farmer.state}</span>
                           <span className="px-2.5 py-1 rounded-lg bg-white border border-gray-200 font-extrabold text-gray-900 text-xs">&#10003; {farmer.crop}</span>
@@ -289,11 +288,10 @@ export default function InsurancePage() {
                             {doc.status === "Uploaded" ? "✓" : "○"} {doc.name.split("/")[0]}
                           </div>
                           <span
-                            className={`px-2 py-0.5 rounded-md text-[10px] font-extrabold ${
-                              doc.status === "Uploaded"
+                            className={`px-2 py-0.5 rounded-md text-[10px] font-extrabold ${doc.status === "Uploaded"
                                 ? "bg-emerald-100 text-emerald-800"
                                 : "bg-amber-100 text-amber-900"
-                            }`}
+                              }`}
                           >
                             {doc.status}
                           </span>

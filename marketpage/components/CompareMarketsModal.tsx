@@ -2,7 +2,7 @@
 
 import React from "react";
 import { CropMarketInfo, Market, ComputedMarketMetrics } from "../types";
-import { formatCurrency, formatNumber } from "../marketService";
+import { formatCurrency } from "../marketService";
 
 interface CompareMarketsModalProps {
   currentCrop: CropMarketInfo;

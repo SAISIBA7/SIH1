@@ -83,7 +83,7 @@ export default function MarketPage() {
       setApiSource(response.source);
       setTotalRecords(response.totalRecords);
       setLastUpdatedTime(`Arrival Date: ${response.lastArrivalDate} (${new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} IST)`);
-    } catch (err) {
+    } catch {
       setError("Failed to retrieve real-time mandi prices.");
     } finally {
       setLoading(false);

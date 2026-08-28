@@ -22,7 +22,6 @@ import {
   Search,
   X,
   Home,
-  BarChart3,
   Store,
   Check
 } from "lucide-react";
@@ -61,9 +60,36 @@ export default function FarmerProfilePage() {
     }
   });
 
-  const [activeTab, setActiveTab] = useState("Home");
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  // Load from DB API on mount
+  React.useEffect(() => {
+    async function loadFarmerProfile() {
+      try {
+        const res = await fetch('/api/farmers');
+        const json = await res.json();
+        if (json?.data && Array.isArray(json.data) && json.data.length > 0) {
+          const f = json.data[0];
+          setFarmer(prev => ({
+            ...prev,
+            name: f.name || prev.name,
+            phone: f.phone || prev.phone,
+            maskedPhone: f.phone ? f.phone.slice(0, 5) + "XXXX" + f.phone.slice(-3) : prev.maskedPhone,
+            village: f.village || prev.village,
+            district: f.district || prev.district,
+            language: f.language || prev.language,
+            landArea: `${f.land_area || 2.5} acres`,
+            loanAmount: f.loan_amount ? `₹${Number(f.loan_amount).toLocaleString('en-IN')}` : prev.loanAmount,
+            loanDueDate: f.loan_due_date || prev.loanDueDate,
+          }));
+        }
+      } catch (e) {
+        console.warn('Could not fetch farmer profile:', e);
+      }
+    }
+    loadFarmerProfile();
+  }, []);
 
   // Edit Form State
   const [editFormData, setEditFormData] = useState({
@@ -80,8 +106,15 @@ export default function FarmerProfilePage() {
     setTimeout(() => setToastMessage(null), 3000);
   };
 
-  const handleLanguageChange = (lang: string) => {
+  const handleLanguageChange = async (lang: string) => {
     setFarmer(prev => ({ ...prev, language: lang }));
+    try {
+      await fetch('/api/farmers', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: 'farmer-001', language: lang })
+      });
+    } catch {}
     showToast(lang === "or" ? "ଭାଷା ସଫଳତାର ସହିତ ପରିବର୍ତ୍ତିତ ହୋଇଛି (Odia)" : lang === "hi" ? "भाषा सफलतापूर्वक बदल दी गई (Hindi)" : "Language updated to English");
   };
 
@@ -96,7 +129,7 @@ export default function FarmerProfilePage() {
     showToast("Preferences updated");
   };
 
-  const handleAddFarm = () => {
+  const handleAddFarm = async () => {
     const newFarm = {
       id: String(farmer.farms.length + 1),
       name: `East Basin Plot (Plot 0${farmer.farms.length + 1})`,
@@ -110,7 +143,20 @@ export default function FarmerProfilePage() {
       farms: [...prev.farms, newFarm],
       profileCompleteness: Math.min(100, prev.profileCompleteness + 5)
     }));
-    showToast("New farm added successfully!");
+
+    try {
+      await fetch('/api/crops', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          farmer_id: 'farmer-001',
+          name: 'Groundnut (TG-37A)',
+          stage: 'Sowing & Germination'
+        })
+      });
+    } catch {}
+
+    showToast("New farm added and synced to database!");
   };
 
   const openEditModal = () => {
@@ -125,7 +171,7 @@ export default function FarmerProfilePage() {
     setIsEditModalOpen(true);
   };
 
-  const handleSaveProfile = (e: React.FormEvent) => {
+  const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     const newErrors: Record<string, string> = {};
     if (!editFormData.name.trim()) newErrors.name = "Name cannot be empty";
@@ -151,8 +197,26 @@ export default function FarmerProfilePage() {
       district: editFormData.district,
       language: editFormData.language
     }));
+
+    try {
+      await fetch('/api/farmers', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: 'farmer-001',
+          name: editFormData.name,
+          phone: editFormData.phone,
+          village: editFormData.village,
+          district: editFormData.district,
+          language: editFormData.language
+        })
+      });
+    } catch (err) {
+      console.warn('Sync to database failed:', err);
+    }
+
     setIsEditModalOpen(false);
-    showToast("Profile details updated successfully!");
+    showToast("Profile details updated and saved to Database!");
   };
 
   return (

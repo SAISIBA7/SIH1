@@ -14,7 +14,7 @@ interface MarketDetailsModalProps {
 
 export const MarketDetailsModal: React.FC<MarketDetailsModalProps> = ({
   market,
-  currentCrop,
+  currentCrop: _currentCrop,
   quantityQtl,
   isOpen,
   onClose,

@@ -2,7 +2,7 @@
 
 import React from "react";
 import { CropMarketInfo, Market, ComputedMarketMetrics } from "../types";
-import { formatCurrency, formatNumber } from "../marketService";
+import { formatCurrency } from "../marketService";
 
 interface NetRealizationCalculatorProps {
   currentCrop: CropMarketInfo;
@@ -14,19 +14,14 @@ interface NetRealizationCalculatorProps {
 }
 
 export const NetRealizationCalculator: React.FC<NetRealizationCalculatorProps> = ({
-  currentCrop,
+  currentCrop: _currentCrop,
   bestMarket,
-  lowestMarket,
+  lowestMarket: _lowestMarket,
   quantityQtl,
   onQuantityChange,
   marketsWithMetrics,
 }) => {
   if (!bestMarket) return null;
-
-  const bestMetrics = marketsWithMetrics.find((m) => m.market.id === bestMarket.id)?.metrics;
-  const lowestMetrics = lowestMarket
-    ? marketsWithMetrics.find((m) => m.market.id === lowestMarket.id)?.metrics
-    : null;
 
   return (
     <section className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-white/85 backdrop-blur-xl border border-emerald-800/15 p-4 sm:p-7 shadow-xs">

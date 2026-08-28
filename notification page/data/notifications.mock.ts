@@ -1,0 +1,85 @@
+import { NotificationItem } from '../types';
+
+const now = new Date();
+const hoursAgo = (hours: number) => new Date(now.getTime() - hours * 60 * 60 * 1000).toISOString();
+const daysAgo = (days: number) => new Date(now.getTime() - days * 24 * 60 * 60 * 1000).toISOString();
+
+export const mockNotifications: NotificationItem[] = [
+  {
+    id: 'n1',
+    category: 'Risk',
+    priority: 'critical',
+    title: 'Your crop distress risk increased to 81/100',
+    description: 'Based on recent rainfall shortages and your upcoming loan deadline, your risk score is now critical.',
+    timestamp: hoursAgo(2),
+    ctaLabel: 'View Risk Details',
+    ctaHref: '/officer-dashboard',
+    isRead: false,
+  },
+  {
+    id: 'n2',
+    category: 'Weather',
+    priority: 'warning',
+    title: 'Heavy rainfall expected tomorrow',
+    description: '65mm of rain is forecast for Mayurbhanj tomorrow. Your paddy is in vegetative stage — this raises waterlogging risk.',
+    timestamp: hoursAgo(5),
+    ctaLabel: 'View Advisory →',
+    ctaHref: '/crop-monitoring-page',
+    isRead: false,
+  },
+  {
+    id: 'n3',
+    category: 'Crop Activities',
+    priority: 'info',
+    title: 'Soil inspection due today',
+    description: 'Remember to check your field drainage today before the expected rainfall arrives.',
+    timestamp: hoursAgo(8),
+    ctaLabel: 'Open Crop Plan →',
+    ctaHref: '/full-crop-guide',
+    isRead: true,
+  },
+  {
+    id: 'n4',
+    category: 'Market',
+    priority: 'info',
+    title: 'Paddy price decreased 8%',
+    description: 'Local mandi prices for Paddy have seen a drop over the last 48 hours.',
+    timestamp: daysAgo(1),
+    ctaLabel: 'Compare Mandis →',
+    ctaHref: '/marketpage',
+    isRead: true,
+  },
+  {
+    id: 'n5',
+    category: 'Government',
+    priority: 'info',
+    title: 'New Solar Pump scheme available',
+    description: 'A new subsidy is available for solar water pumps. Check if you are eligible based on your land size.',
+    timestamp: daysAgo(2),
+    ctaLabel: 'View Scheme Details →',
+    ctaHref: '/government-equipment-schemes',
+    isRead: true,
+  },
+  {
+    id: 'n6',
+    category: 'Insurance',
+    priority: 'warning',
+    title: 'Premium payment due in 5 days',
+    description: 'Your crop insurance premium is due soon. Pay early to ensure uninterrupted coverage.',
+    timestamp: daysAgo(3),
+    ctaLabel: 'Review Policy →',
+    ctaHref: '/insurance',
+    isRead: true,
+  },
+  {
+    id: 'n7',
+    category: 'Officer Updates',
+    priority: 'info',
+    title: 'New advisory posted for Mayurbhanj',
+    description: 'The agricultural officer has posted a new seasonal advisory for pest control.',
+    timestamp: daysAgo(5),
+    ctaLabel: 'Read Advisory →',
+    ctaHref: '/farmer-profile',
+    isRead: true,
+  }
+];

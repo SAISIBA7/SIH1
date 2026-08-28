@@ -1,10 +1,10 @@
 import InsurancePage from "@/insurance/insurances";
 
 export const metadata = {
-  title: "Smart Crop Insurance Portal | PMFBY",
-  description: "Protect your paddy crop when distress strikes. Subsidized government crop insurance under PMFBY.",
+  title: "Smart Crop | PMFBY Crop Insurance Portal",
+  description: "Pradhan Mantri Fasal Bima Yojana (PMFBY), Claim Assistant, and Localized Loss Cover.",
 };
 
-export default function InsuranceRoute() {
+export default function Page() {
   return <InsurancePage />;
 }

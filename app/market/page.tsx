@@ -1,10 +1,10 @@
 import MarketPage from "@/marketpage/marketpage";
 
 export const metadata = {
-  title: "Market Decision & Mandi Prices | Smart Farm OS",
-  description: "Compare nearby mandi prices, calculate transport deductions, and find the best net realization for your crop.",
+  title: "Smart Crop | APMC Mandi Price Intelligence & Net Realization",
+  description: "Live Wholesale Mandi Prices, MSP Comparison, Transport Calculator, and Market Trends.",
 };
 
-export default function MarketRoute() {
+export default function Page() {
   return <MarketPage />;
 }
