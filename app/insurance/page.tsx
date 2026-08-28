@@ -1,4 +1,4 @@
-import InsurancePage from "@/insurance/insurance";
+import InsurancePage from "@/insurance/insurances";
 
 export const metadata = {
   title: "Smart Crop Insurance Portal | PMFBY",
