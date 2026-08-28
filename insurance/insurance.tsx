@@ -4,8 +4,10 @@ import React, { useState } from "react";
 import { InsuranceBackground } from "./components/InsuranceBackground";
 import { InsuranceHeader } from "./components/InsuranceHeader";
 import { RegistrationStepper } from "./components/RegistrationStepper";
-import { mockFarmer, mockRisk, initialDocuments, mockApplication } from "./data/mockInsurance";
-import { FarmerProfile, InsuranceState, DocumentItem } from "./types/insurance";
+import { BankSchemeList } from "./components/BankSchemeList";
+import { SchemeDetails } from "./components/SchemeDetails";
+import { mockFarmer, mockRisk, initialDocuments, mockApplication, mockBankSchemes } from "./data/mockInsurance";
+import { FarmerProfile, InsuranceState, DocumentItem, BankScheme } from "./types/insurance";
 
 /**
  * Smart Crop Insurance Portal — Wise.com Design Architecture (Bright Light Theme)
@@ -19,7 +21,8 @@ export default function InsurancePage() {
   const [status, setStatus] = useState<InsuranceState>("NOT_REGISTERED");
   const [farmer, setFarmer] = useState<FarmerProfile>(mockFarmer);
   const [documents, setDocuments] = useState<DocumentItem[]>(initialDocuments);
-  const [activeView, setActiveView] = useState<"dashboard" | "stepper">("dashboard");
+  const [activeView, setActiveView] = useState<"dashboard" | "schemes" | "schemeDetails" | "stepper">("dashboard");
+  const [selectedScheme, setSelectedScheme] = useState<BankScheme | null>(null);
   const [isEditingParcel, setIsEditingParcel] = useState(false);
   const [showRulesModal, setShowRulesModal] = useState(false);
   const [showLossReported, setShowLossReported] = useState(false);
@@ -35,12 +38,12 @@ export default function InsurancePage() {
         <InsuranceHeader
           lang={lang}
           onLangChange={setLang}
-          onBack={activeView === "stepper" ? () => setActiveView("dashboard") : undefined}
+          onBack={activeView !== "dashboard" ? () => setActiveView("dashboard") : undefined}
         />
 
         {/* Main Content Area */}
         <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-8 py-8 lg:py-12">
-          {activeView === "stepper" ? (
+          {activeView === "stepper" && (
             /* Registration Stepper & Status Timeline per PRD §9 & §11 */
             <div className="max-w-4xl mx-auto">
               <RegistrationStepper
@@ -51,7 +54,32 @@ export default function InsurancePage() {
                 onCancel={() => setActiveView("dashboard")}
               />
             </div>
-          ) : (
+          )}
+
+          {activeView === "schemes" && (
+            <div className="max-w-6xl w-full mx-auto">
+              <BankSchemeList
+                schemes={mockBankSchemes}
+                onSelectScheme={(scheme) => {
+                  setSelectedScheme(scheme);
+                  setActiveView("schemeDetails");
+                }}
+                onBack={() => setActiveView("dashboard")}
+              />
+            </div>
+          )}
+
+          {activeView === "schemeDetails" && selectedScheme && (
+            <div className="max-w-4xl mx-auto">
+              <SchemeDetails
+                scheme={selectedScheme}
+                onApply={() => setActiveView("stepper")}
+                onBack={() => setActiveView("schemes")}
+              />
+            </div>
+          )}
+
+          {activeView === "dashboard" && (
             /* Wise.com 50/50 Dual Stage Split Grid (Light Theme) */
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-center">
               {/* ========================================================= */}
@@ -156,7 +184,7 @@ export default function InsurancePage() {
                     </div>
                   </div>
 
-                  {/* Parcel Details Strip */}
+                  {/* Parcel Details Strip with eligibility pre-fill checkmarks — PRD §27 */}
                   <div className="p-4 rounded-2xl bg-gray-50/90 border border-gray-200/90 space-y-2 text-xs sm:text-sm">
                     <div className="flex items-center justify-between">
                       <span className="font-bold text-gray-700">Pre-Filled Farm Profile</span>
@@ -190,19 +218,29 @@ export default function InsurancePage() {
                         </div>
                       </div>
                     ) : (
-                      <div className="flex flex-wrap items-center gap-2 pt-1">
-                        <span className="px-2.5 py-1 rounded-lg bg-white border border-gray-200 font-extrabold text-gray-900 text-xs">
-                          🌾 {farmer.crop}
-                        </span>
-                        <span className="px-2.5 py-1 rounded-lg bg-white border border-gray-200 font-extrabold text-gray-900 text-xs">
-                          📐 {farmer.area}
-                        </span>
-                        <span className="px-2.5 py-1 rounded-lg bg-white border border-gray-200 font-extrabold text-gray-900 text-xs">
-                          📍 {farmer.district}
-                        </span>
-                        <span className="px-2.5 py-1 rounded-lg bg-white border border-gray-200 font-extrabold text-gray-900 text-xs">
-                          ☀️ {farmer.season}
-                        </span>
+                      <div className="space-y-1.5 pt-1">
+                        {[
+                          { label: "State", value: farmer.state },
+                          { label: "District", value: farmer.district },
+                          { label: "Crop", value: farmer.crop },
+                          { label: "Area", value: farmer.area },
+                          { label: "Season", value: farmer.season },
+                        ].map(({ label, value }) => (
+                          <div key={label} className="flex items-center justify-between text-xs">
+                            <span className="flex items-center gap-1.5 text-emerald-700 font-semibold">
+                              <span className="text-emerald-600 font-black">&#10003;</span>
+                              We already have this information
+                            </span>
+                            <span className="font-bold text-gray-800">{label}: {value}</span>
+                          </div>
+                        )).slice(0,1)}
+                        <div className="flex flex-wrap items-center gap-2 pt-1">
+                          <span className="px-2.5 py-1 rounded-lg bg-white border border-gray-200 font-extrabold text-gray-900 text-xs">&#10003; State: {farmer.state}</span>
+                          <span className="px-2.5 py-1 rounded-lg bg-white border border-gray-200 font-extrabold text-gray-900 text-xs">&#10003; {farmer.crop}</span>
+                          <span className="px-2.5 py-1 rounded-lg bg-white border border-gray-200 font-extrabold text-gray-900 text-xs">&#10003; {farmer.area}</span>
+                          <span className="px-2.5 py-1 rounded-lg bg-white border border-gray-200 font-extrabold text-gray-900 text-xs">&#10003; {farmer.district}</span>
+                          <span className="px-2.5 py-1 rounded-lg bg-white border border-gray-200 font-extrabold text-gray-900 text-xs">&#10003; {farmer.season}</span>
+                        </div>
                       </div>
                     )}
                   </div>
@@ -267,18 +305,18 @@ export default function InsurancePage() {
                   {/* Single Big Primary Action CTA (Wise style) */}
                   <div className="pt-2">
                     <button
-                      onClick={() => setActiveView("stepper")}
+                      onClick={() => setActiveView("schemes")}
                       className="w-full py-4 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-base sm:text-lg tracking-wide transition-all active:scale-[0.98] shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
                     >
-                      <span>REGISTER FOR PMFBY INSURANCE</span>
+                      <span>BROWSE &amp; APPLY FOR INSURANCE</span>
                       <span>→</span>
                     </button>
                   </div>
 
-                  {/* Quick Bottom Triggers: Emergency Loss & Guidelines */}
+                  {/* Quick Bottom Triggers: Emergency Loss & Guidelines — PRD §37, §38 */}
                   <div className="pt-3 border-t border-gray-200 flex flex-wrap items-center justify-between gap-3 text-xs">
                     {showLossReported ? (
-                      <span className="text-emerald-800 font-bold">✓ Loss Intimation Docket Logged (14447)</span>
+                      <span className="text-emerald-800 font-bold">&#10003; Loss Intimation Docket Logged (14447)</span>
                     ) : (
                       <button
                         onClick={() => setShowLossReported(true)}
@@ -296,15 +334,28 @@ export default function InsurancePage() {
                     </button>
                   </div>
 
-                  {/* Expanded Guidelines Pane */}
+                  {/* Expanded Guidelines Pane — PRD §38 */}
                   {showRulesModal && (
-                    <div className="p-4 rounded-2xl bg-gray-50 border border-gray-200 text-xs text-gray-700 space-y-2 leading-relaxed animate-fadeIn">
-                      <div className="font-bold text-gray-900">Official PMFBY Coverage Rules:</div>
-                      <p>• <strong>Prevented Sowing:</strong> Up to 25% on-account claim if rainfall prevents planting.</p>
-                      <p>• <strong>Standing Crop:</strong> Drought &amp; dry spell yield relief based on CCE assessment.</p>
-                      <p>• <strong>Post-Harvest:</strong> Up to 14 days coverage for cut-and-spread crops in field.</p>
+                    <div className="p-4 rounded-2xl bg-gray-50 border border-gray-200 text-xs text-gray-700 space-y-2 leading-relaxed">
+                      <div className="font-bold text-gray-900 mb-1">ABOUT CROP INSURANCE</div>
+                      <p className="text-gray-600 leading-relaxed">Crop insurance can provide financial protection against eligible crop losses under the applicable scheme. Coverage, eligibility and claim rules depend on the relevant scheme and official guidelines.</p>
+                      <div className="pt-2 border-t border-gray-200 font-bold text-gray-900">Official PMFBY Coverage Rules:</div>
+                      <p>&bull; <strong>Prevented Sowing:</strong> Up to 25% on-account claim if rainfall prevents planting.</p>
+                      <p>&bull; <strong>Standing Crop:</strong> Drought &amp; dry spell yield relief based on CCE assessment.</p>
+                      <p>&bull; <strong>Post-Harvest:</strong> Up to 14 days coverage for cut-and-spread crops in field.</p>
+                      <a href="https://pmfby.gov.in" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-emerald-700 font-bold hover:underline mt-1">
+                        View Official Information ↗
+                      </a>
                     </div>
                   )}
+
+                  {/* Claim Support section — PRD §37 */}
+                  <div className="p-4 rounded-2xl bg-gray-50/80 border border-gray-200/80 text-xs text-gray-600 space-y-1.5">
+                    <div className="font-extrabold text-gray-800 uppercase tracking-wider text-[11px]">Claim Support</div>
+                    <p>No active claims.</p>
+                    <p className="leading-relaxed">If an insured crop experiences an eligible loss, claim information will appear here.</p>
+                    <button className="text-emerald-700 font-bold hover:underline mt-1">Learn About Claims ↗</button>
+                  </div>
                 </div>
               </div>
             </div>

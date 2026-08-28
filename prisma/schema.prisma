@@ -1,0 +1,230 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Farmer {
+  id          String   @id @db.VarChar(30)
+  name        String   @db.VarChar(150)
+  phone       String   @db.VarChar(15)
+  district    String   @db.VarChar(100)
+  village     String   @db.VarChar(150)
+  state       String   @db.VarChar(100)
+  language    String   @db.VarChar(10)
+  landArea    Decimal  @map("land_area") @db.Decimal(10, 2)
+  loanAmount  Decimal? @map("loan_amount") @db.Decimal(12, 2)
+  loanDueDate DateTime? @map("loan_due_date") @db.Date
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  farms               Farm[]
+  crops               Crop[]
+  riskScores          RiskScore[]
+  riskHistory         RiskHistory[]
+  insurance           Insurance[]
+  interventions       Intervention[]
+  loans               Loan[]
+  farmerBankAccounts  FarmerBankAccount[]
+  schemeApplications  SchemeApplication[]
+  bookings            Booking[]
+  equipmentRentals    EquipmentRental[]
+
+  @@map("farmers")
+}
+
+model Farm {
+  id        String   @id @db.VarChar(30)
+  farmerId  String   @map("farmer_id") @db.VarChar(30)
+  name      String   @db.VarChar(150)
+  latitude  Decimal  @db.Decimal(10, 7)
+  longitude Decimal  @db.Decimal(10, 7)
+  area      Decimal  @db.Decimal(10, 2)
+  soilType  String   @map("soil_type") @db.VarChar(100)
+  village   String   @db.VarChar(150)
+  district  String   @db.VarChar(100)
+  
+  farmer    Farmer   @relation(fields: [farmerId], references: [id])
+  crops     Crop[]
+
+  @@map("farms")
+}
+
+model Crop {
+  id          String   @id @db.VarChar(30)
+  farmerId    String   @map("farmer_id") @db.VarChar(30)
+  farmId      String?  @map("farm_id") @db.VarChar(30)
+  name        String   @db.VarChar(100)
+  stage       String   @db.VarChar(50)
+  sowingDate  DateTime @map("sowing_date") @db.Date
+
+  farmer      Farmer   @relation(fields: [farmerId], references: [id])
+  farm        Farm?    @relation(fields: [farmId], references: [id])
+  riskScores  RiskScore[]
+  riskHistory RiskHistory[]
+
+  @@map("crops")
+}
+
+model RiskScore {
+  id           String   @id @db.VarChar(30)
+  farmerId     String   @map("farmer_id") @db.VarChar(30)
+  cropId       String?  @map("crop_id") @db.VarChar(30)
+  score        Int      @db.TinyInt
+  rainfallRisk Int      @map("rainfall_risk") @db.TinyInt
+  marketRisk   Int      @map("market_risk") @db.TinyInt
+  loanRisk     Int      @map("loan_risk") @db.TinyInt
+  reasons      Json
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  farmer       Farmer   @relation(fields: [farmerId], references: [id])
+  crop         Crop?    @relation(fields: [cropId], references: [id])
+
+  @@map("risk_scores")
+}
+
+model RiskHistory {
+  id           String   @id @db.VarChar(30)
+  farmerId     String   @map("farmer_id") @db.VarChar(30)
+  cropId       String   @map("crop_id") @db.VarChar(30)
+  riskScore    Int      @map("risk_score") @db.TinyInt
+  calculatedAt DateTime @default(now()) @map("calculated_at")
+
+  farmer       Farmer   @relation(fields: [farmerId], references: [id])
+  crop         Crop     @relation(fields: [cropId], references: [id])
+
+  @@map("risk_history")
+}
+
+model Bank {
+  bankId      String   @id @map("bank_id") @db.VarChar(30)
+  bankName    String   @map("bank_name") @db.VarChar(150)
+  branchName  String   @map("branch_name") @db.VarChar(150)
+  ifscCode    String   @map("ifsc_code") @db.VarChar(20)
+  district    String   @db.VarChar(100)
+  village     String   @db.VarChar(150)
+
+  farmerBankAccounts FarmerBankAccount[]
+  loans              Loan[]
+  schemes            Scheme[]
+
+  @@map("banks")
+}
+
+model FarmerBankAccount {
+  accountId     String   @id @map("account_id") @db.VarChar(30)
+  farmerId      String   @map("farmer_id") @db.VarChar(30)
+  bankId        String   @map("bank_id") @db.VarChar(30)
+  accountNumber String   @map("account_number") @db.VarChar(50)
+  accountType   String   @map("account_type") @db.VarChar(50)
+  status        String   @db.VarChar(20)
+
+  farmer Farmer @relation(fields: [farmerId], references: [id])
+  bank   Bank   @relation(fields: [bankId], references: [bankId])
+
+  @@map("farmer_bank_accounts")
+}
+
+model Loan {
+  loanId            String   @id @map("loan_id") @db.VarChar(30)
+  farmerId          String   @map("farmer_id") @db.VarChar(30)
+  bankId            String   @map("bank_id") @db.VarChar(30)
+  loanType          String   @map("loan_type") @db.VarChar(50)
+  loanAmount        Decimal  @map("loan_amount") @db.Decimal(12, 2)
+  outstandingAmount Decimal  @map("outstanding_amount") @db.Decimal(12, 2)
+  interestRate      Decimal  @map("interest_rate") @db.Decimal(5, 2)
+  sanctionDate      DateTime @map("sanction_date") @db.Date
+  dueDate           DateTime @map("due_date") @db.Date
+  status            String   @db.VarChar(20)
+
+  farmer        Farmer        @relation(fields: [farmerId], references: [id])
+  bank          Bank          @relation(fields: [bankId], references: [bankId])
+  loanPayments  LoanPayment[]
+
+  @@map("loans")
+}
+
+model LoanPayment {
+  paymentId       String   @id @map("payment_id") @db.VarChar(30)
+  loanId          String   @map("loan_id") @db.VarChar(30)
+  amountPaid      Decimal  @map("amount_paid") @db.Decimal(12, 2)
+  paymentDate     DateTime @map("payment_date") @db.Date
+  remainingAmount Decimal  @map("remaining_amount") @db.Decimal(12, 2)
+
+  loan Loan @relation(fields: [loanId], references: [loanId])
+
+  @@map("loan_payments")
+}
+
+model Scheme {
+  schemeId     String   @id @map("scheme_id") @db.VarChar(30)
+  bankId       String   @map("bank_id") @db.VarChar(30)
+  schemeName   String   @map("scheme_name") @db.VarChar(200)
+  description  String?  @db.Text
+  eligibility  Json?
+  coverage     Decimal? @db.Decimal(12, 2)
+  premium      Decimal? @db.Decimal(12, 2)
+  status       String   @db.VarChar(20)
+
+  bank               Bank                @relation(fields: [bankId], references: [bankId])
+  schemeApplications SchemeApplication[]
+
+  @@map("schemes")
+}
+
+model SchemeApplication {
+  applicationId String   @id @map("application_id") @db.VarChar(30)
+  farmerId      String   @map("farmer_id") @db.VarChar(30)
+  schemeId      String   @map("scheme_id") @db.VarChar(30)
+  status        String   @db.VarChar(20)
+  appliedAt     DateTime @default(now()) @map("applied_at")
+
+  farmer Farmer @relation(fields: [farmerId], references: [id])
+  scheme Scheme @relation(fields: [schemeId], references: [schemeId])
+
+  @@map("scheme_applications")
+}
+
+model Insurance {
+  id        String   @id @db.VarChar(30)
+  farmerId  String   @map("farmer_id") @db.VarChar(30)
+  crop      String   @db.VarChar(100)
+  status    String   @db.VarChar(20)
+
+  farmer Farmer @relation(fields: [farmerId], references: [id])
+
+  @@map("insurance")
+}
+
+model Intervention {
+  id        String   @id @db.VarChar(30)
+  farmerId  String   @map("farmer_id") @db.VarChar(30)
+  type      String   @db.VarChar(50)
+  status    String   @db.VarChar(20)
+
+  farmer Farmer @relation(fields: [farmerId], references: [id])
+
+  @@map("interventions")
+}
+
+model Booking {
+  id        String   @id @db.VarChar(30)
+  farmerId  String   @map("farmer_id") @db.VarChar(30)
+  status    String   @db.VarChar(20)
+
+  farmer Farmer @relation(fields: [farmerId], references: [id])
+
+  @@map("bookings")
+}
+
+model EquipmentRental {
+  id        String   @id @db.VarChar(30)
+  farmerId  String   @map("farmer_id") @db.VarChar(30)
+  status    String   @db.VarChar(20)
+
+  farmer Farmer @relation(fields: [farmerId], references: [id])
+
+  @@map("equipment_rentals")
+}

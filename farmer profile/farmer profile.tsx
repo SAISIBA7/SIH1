@@ -505,16 +505,21 @@ export default function FarmerProfilePage() {
               </div>
 
               <div className="bg-gradient-to-r from-[#f7f9f4] to-[#eef4ea] p-4 rounded-2xl border border-[#d2e3ca] mb-4">
+                {/* CURRENT label — PRD §15 */}
+                <div className="inline-flex items-center gap-1.5 mb-2 px-2 py-0.5 rounded-full bg-emerald-700/10 border border-emerald-700/20">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse" />
+                  <span className="text-[10px] font-extrabold text-emerald-800 uppercase tracking-wider">Current — Kharif 2026</span>
+                </div>
                 <div className="flex justify-between items-start">
                   <div>
                     <h3 className="text-lg font-extrabold text-[#16271c]">{farmer.currentCrop} (Swarna Sub-1)</h3>
-                    <p className="text-xs text-[#526a57] mt-0.5">Sown: {farmer.sowingDate} • Stage: {farmer.cropStage}</p>
+                    <p className="text-xs text-[#526a57] mt-0.5">Farm 01 • Sown: {farmer.sowingDate} • Stage: {farmer.cropStage}</p>
                   </div>
                   <button
                     onClick={() => showToast("Navigating to detailed Crop Diagnostic Guide...")}
                     className="px-3 py-1.5 bg-[#1c2e22] text-[#d8e678] text-xs font-semibold rounded-xl flex items-center gap-1 hover:bg-black transition shadow-sm"
                   >
-                    <span>View Guide</span>
+                    <span>View Crop</span>
                     <ExternalLink className="w-3 h-3" />
                   </button>
                 </div>
@@ -568,6 +573,43 @@ export default function FarmerProfilePage() {
                     <CheckCircle2 className="w-3 h-3" /> Advisory Support Eligible
                   </span>
                 </div>
+              </div>
+            </div>
+
+            {/* 5.5 INSURANCE SUMMARY — PRD §17 */}
+            <div className="bg-white/80 backdrop-blur-xl border border-white/90 rounded-3xl p-6 shadow-[0_8px_30px_rgba(0,0,0,0.04)]">
+              <div className="flex items-center justify-between pb-4 mb-4 border-b border-black/5">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-lg bg-emerald-100/50 text-emerald-900 flex items-center justify-center">
+                    <ShieldCheck className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h2 className="text-base font-bold text-[#16271c]">Insurance</h2>
+                    <p className="text-xs text-[#7a8b6f]">Current protection status</p>
+                  </div>
+                </div>
+                <span className="text-[10px] font-extrabold uppercase px-2 py-1 rounded-full bg-amber-100 text-amber-800 border border-amber-200" aria-label="Insurance status: Not Registered">Not Registered</span>
+              </div>
+
+              <div className="space-y-2 text-xs">
+                <div className="flex justify-between items-center py-2 border-b border-black/5">
+                  <span className="text-[#7a8b6f]">Crop</span>
+                  <span className="font-bold text-[#16271c]">{farmer.currentCrop}</span>
+                </div>
+                <div className="flex justify-between items-center py-2 border-b border-black/5">
+                  <span className="text-[#7a8b6f]">Farm</span>
+                  <span className="font-bold text-[#16271c]">{farmer.farms[0]?.name ?? 'Farm 01'}</span>
+                </div>
+                <div className="flex justify-between items-center py-2">
+                  <span className="text-[#7a8b6f]">Area</span>
+                  <span className="font-bold text-[#16271c]">{farmer.landArea}</span>
+                </div>
+              </div>
+              <div className="pt-4 flex flex-col gap-2">
+                <p className="text-[11px] text-center text-[#5a7260]">You may be eligible for crop insurance.</p>
+                <Link href="/insurance" className="w-full text-center px-4 py-2.5 bg-[#1c2e22] text-[#d8e678] font-bold text-xs rounded-xl shadow-sm hover:bg-[#2a4533] transition">
+                  View Insurance →
+                </Link>
               </div>
             </div>
 
@@ -642,9 +684,11 @@ export default function FarmerProfilePage() {
                         <span className="font-semibold text-[#1e2a22] block">{item.title}</span>
                         <span className="text-[11px] text-[#7a8b6f]">{item.desc}</span>
                       </div>
-                      <div className={`w-10 h-6 flex items-center rounded-full p-1 transition-colors ${enabled ? "bg-[#2f6b3c]" : "bg-gray-300"}`}>
+                      {/* Accessible toggle — PRD §19: not color-alone */}
+                      <div className={`w-10 h-6 flex items-center rounded-full p-1 transition-colors ${enabled ? "bg-[#2f6b3c]" : "bg-gray-300"}`} role="switch" aria-checked={enabled} aria-label={item.title}>
                         <div className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform ${enabled ? "translate-x-4" : "translate-x-0"}`} />
                       </div>
+                      <span className={`text-[10px] font-bold ml-1 w-6 text-center ${enabled ? 'text-emerald-700' : 'text-gray-400'}`}>{enabled ? 'ON' : 'OFF'}</span>
                     </div>
                   );
                 })}
