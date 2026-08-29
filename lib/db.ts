@@ -1,22 +1,14 @@
-<<<<<<< HEAD
 import mysql from 'mysql2/promise';
 
 declare global {
   // eslint-disable-next-line no-var
   var mysqlPool: mysql.Pool | undefined;
-=======
-import mysql, { Pool } from 'mysql2/promise';
-
-declare global {
-  var _mysqlPool: Pool | undefined;
->>>>>>> a4c6f303edae7e76a4c00959523468272a63f96a
 }
 
 const dbConfig = {
   host: process.env.DB_HOST || 'sih-mysql.cley86o8g8vx.eu-north-1.rds.amazonaws.com',
   port: Number(process.env.DB_PORT) || 3306,
   user: process.env.DB_USER || 'admin',
-<<<<<<< HEAD
   // No hardcoded fallback — a missing DB_PASSWORD must fail loudly with an auth
   // error rather than silently trying a stale credential.
   password: process.env.DB_PASSWORD,
@@ -52,7 +44,7 @@ export async function query<T = any>(sql: string, values?: any[]): Promise<T> {
  */
 export async function checkDbConnection(): Promise<{ success: boolean; message: string }> {
   try {
-    const [rows] = await pool.query('SELECT 1 as connected');
+    await pool.query('SELECT 1 as connected');
     return {
       success: true,
       message: 'Successfully connected to AWS RDS MySQL database (sih).',
@@ -63,256 +55,5 @@ export async function checkDbConnection(): Promise<{ success: boolean; message: 
       success: false,
       message: `Database connection failed: ${error.message}`,
     };
-=======
-  password: process.env.DB_PASSWORD || 'kFjzqqPYEQb2awh',
-  database: process.env.DB_NAME || 'sih',
-  waitForConnections: true,
-  connectionLimit: 10,
-  maxIdle: 10,
-  idleTimeout: 60000,
-  queueLimit: 0,
-  enableKeepAlive: true,
-  keepAliveInitialDelay: 10000,
-  connectTimeout: 20000,
-  ssl: {
-    rejectUnauthorized: false
-  }
-};
-
-export const pool: Pool = global._mysqlPool || mysql.createPool(dbConfig);
-
-if (process.env.NODE_ENV !== 'production') {
-  global._mysqlPool = pool;
-}
-
-export async function query<T = any>(sql: string, params?: any[]): Promise<T> {
-  try {
-    const [rows] = await pool.execute(sql, params);
-    return rows as T;
-  } catch (err: any) {
-    console.error('[Database Query Error]:', err?.message || err);
-    throw err;
-  }
-}
-
-/**
- * Initializes all core tables according to Smart Crop Architecture Specification
- */
-export async function initDatabase(): Promise<boolean> {
-  try {
-    const connection = await pool.getConnection();
-    try {
-      // 1. Users table
-      await connection.query(`
-        CREATE TABLE IF NOT EXISTS users (
-          id VARCHAR(100) PRIMARY KEY,
-          email VARCHAR(255),
-          name VARCHAR(255),
-          phone VARCHAR(32),
-          username VARCHAR(255),
-          password VARCHAR(255),
-          role VARCHAR(50) NOT NULL DEFAULT 'farmer',
-          account_status VARCHAR(50) NOT NULL DEFAULT 'active',
-          profile_id VARCHAR(100),
-          metadata JSON,
-          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-      `);
-
-      // Seed default accounts in RDS if not already present
-      const [existingUsers]: any = await connection.query('SELECT COUNT(*) as count FROM users;');
-      if (existingUsers[0]?.count === 0) {
-        await connection.query(`
-          INSERT INTO users (id, email, name, phone, username, password, role, account_status)
-          VALUES 
-            ('usr_farmer_demo_1', 'farmer@smartcrop.in', 'Ramesh Kumar Patel', '9876543210', 'farmer1', 'Password123!', 'farmer', 'active'),
-            ('usr_admin_demo_1', 'admin@agri.gov.in', 'Dr. Anil Verma (Agronomy Officer)', '9876543211', 'admin1', 'Password123!', 'administrator', 'active'),
-            ('usr_bank_demo_1', 'bank@sbi.co.in', 'SBI Agri Credit Hub', '9876543212', 'bank1', 'Password123!', 'bank', 'active');
-        `);
-      }
-
-      // 2. Farmers Profile table
-      await connection.query(`
-        CREATE TABLE IF NOT EXISTS farmer_profiles (
-          id VARCHAR(64) PRIMARY KEY,
-          user_id VARCHAR(100),
-          name VARCHAR(255) NOT NULL,
-          phone VARCHAR(32) NOT NULL,
-          district VARCHAR(100) DEFAULT 'Mayurbhanj',
-          village VARCHAR(100) DEFAULT 'Baripada',
-          state VARCHAR(100) DEFAULT 'Odisha',
-          language VARCHAR(50) DEFAULT 'en',
-          land_area DECIMAL(10,2) DEFAULT 3.50,
-          soil_type VARCHAR(100) DEFAULT 'Red Loamy',
-          irrigation_source VARCHAR(100) DEFAULT 'Borewell & Canal',
-          loan_amount DECIMAL(12,2) DEFAULT 0.00,
-          loan_due_date DATE,
-          kyc_status VARCHAR(50) DEFAULT 'VERIFIED',
-          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-      `);
-
-      // 3. Crops & Crop Cycles table
-      await connection.query(`
-        CREATE TABLE IF NOT EXISTS crops (
-          id VARCHAR(64) PRIMARY KEY,
-          farmer_id VARCHAR(64) NOT NULL,
-          name VARCHAR(100) NOT NULL,
-          variety VARCHAR(100) DEFAULT 'Swarna (MTU 7029)',
-          stage VARCHAR(100) DEFAULT 'Vegetative Stage',
-          sowing_date DATE,
-          harvest_expected DATE,
-          area_acres DECIMAL(8,2) DEFAULT 2.50,
-          health_score INT DEFAULT 85,
-          water_requirement VARCHAR(50) DEFAULT 'Medium-High',
-          status VARCHAR(50) DEFAULT 'ACTIVE',
-          INDEX idx_farmer (farmer_id)
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-      `);
-
-      // 4. Risk Scores table
-      await connection.query(`
-        CREATE TABLE IF NOT EXISTS risk_scores (
-          id VARCHAR(64) PRIMARY KEY,
-          farmer_id VARCHAR(64) NOT NULL,
-          crop_id VARCHAR(64),
-          overall_score INT NOT NULL DEFAULT 42,
-          risk_level VARCHAR(50) NOT NULL DEFAULT 'MEDIUM',
-          weather_risk INT DEFAULT 65,
-          market_risk INT DEFAULT 38,
-          pest_risk INT DEFAULT 24,
-          financial_risk INT DEFAULT 45,
-          soil_risk INT DEFAULT 30,
-          ai_explanation TEXT,
-          calculated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-          INDEX idx_risk_farmer (farmer_id)
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-      `);
-
-      // 5. AI Recommendations table
-      await connection.query(`
-        CREATE TABLE IF NOT EXISTS ai_recommendations (
-          id VARCHAR(64) PRIMARY KEY,
-          farmer_id VARCHAR(64) NOT NULL,
-          category VARCHAR(50) DEFAULT 'Advisory',
-          priority VARCHAR(20) DEFAULT 'HIGH',
-          title VARCHAR(255) NOT NULL,
-          description TEXT NOT NULL,
-          action_type VARCHAR(100),
-          is_completed BOOLEAN DEFAULT FALSE,
-          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-          INDEX idx_rec_farmer (farmer_id)
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-      `);
-
-      // 6. Government Schemes table
-      await connection.query(`
-        CREATE TABLE IF NOT EXISTS government_schemes (
-          id VARCHAR(64) PRIMARY KEY,
-          name VARCHAR(255) NOT NULL,
-          category VARCHAR(100) DEFAULT 'Machinery Subsidy',
-          subsidy_percent INT DEFAULT 50,
-          max_subsidy_amount DECIMAL(12,2) DEFAULT 100000.00,
-          description TEXT,
-          eligibility_criteria TEXT,
-          status VARCHAR(50) DEFAULT 'ACTIVE',
-          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-      `);
-
-      // 7. Equipment Inventory & Rentals table
-      await connection.query(`
-        CREATE TABLE IF NOT EXISTS equipment (
-          id VARCHAR(64) PRIMARY KEY,
-          name VARCHAR(255) NOT NULL,
-          category VARCHAR(100) DEFAULT 'Tractor',
-          daily_rate DECIMAL(10,2) DEFAULT 800.00,
-          available_count INT DEFAULT 3,
-          hub_location VARCHAR(255) DEFAULT 'Baripada Custom Hiring Center',
-          condition_status VARCHAR(50) DEFAULT 'EXCELLENT',
-          operator_included BOOLEAN DEFAULT TRUE,
-          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-      `);
-
-      // 8. Equipment Rentals table
-      await connection.query(`
-        CREATE TABLE IF NOT EXISTS equipment_rentals (
-          id VARCHAR(64) PRIMARY KEY,
-          equipment_id VARCHAR(64) NOT NULL,
-          farmer_id VARCHAR(64) NOT NULL,
-          start_date DATE NOT NULL,
-          duration_days INT DEFAULT 1,
-          total_cost DECIMAL(10,2) NOT NULL,
-          status VARCHAR(50) DEFAULT 'CONFIRMED',
-          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-      `);
-
-      // 9. Bank & Financial Facilities table
-      await connection.query(`
-        CREATE TABLE IF NOT EXISTS financial_facilities (
-          id VARCHAR(64) PRIMARY KEY,
-          bank_name VARCHAR(255) NOT NULL,
-          scheme_name VARCHAR(255) NOT NULL,
-          facility_type VARCHAR(100) DEFAULT 'KCC Loan',
-          interest_rate DECIMAL(5,2) DEFAULT 4.00,
-          max_amount DECIMAL(12,2) DEFAULT 300000.00,
-          subvention_percent DECIMAL(5,2) DEFAULT 3.00,
-          status VARCHAR(50) DEFAULT 'ACTIVE',
-          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-      `);
-
-      // 10. Loan & Insurance Applications table
-      await connection.query(`
-        CREATE TABLE IF NOT EXISTS applications (
-          id VARCHAR(64) PRIMARY KEY,
-          type VARCHAR(50) NOT NULL DEFAULT 'LOAN', -- 'LOAN', 'INSURANCE', 'SCHEME'
-          farmer_id VARCHAR(64) NOT NULL,
-          farmer_name VARCHAR(255),
-          facility_id VARCHAR(64),
-          amount DECIMAL(12,2) DEFAULT 0.00,
-          status VARCHAR(50) DEFAULT 'Under Review',
-          submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-      `);
-
-      // 11. Officer Interventions table
-      await connection.query(`
-        CREATE TABLE IF NOT EXISTS officer_interventions (
-          id VARCHAR(64) PRIMARY KEY,
-          officer_id VARCHAR(64) NOT NULL,
-          farmer_id VARCHAR(64) NOT NULL,
-          intervention_type VARCHAR(100) NOT NULL, -- 'CALL', 'FIELD_VISIT', 'EMERGENCY_ADVISORY', 'SUBSIDY_FAST_TRACK'
-          notes TEXT,
-          status VARCHAR(50) DEFAULT 'SCHEDULED',
-          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-      `);
-
-      // 12. Notifications table
-      await connection.query(`
-        CREATE TABLE IF NOT EXISTS notifications (
-          id VARCHAR(64) PRIMARY KEY,
-          user_id VARCHAR(64) NOT NULL,
-          title VARCHAR(255) NOT NULL,
-          message TEXT NOT NULL,
-          category VARCHAR(50) DEFAULT 'ALERT',
-          priority VARCHAR(20) DEFAULT 'HIGH',
-          is_read BOOLEAN DEFAULT FALSE,
-          action_url VARCHAR(255),
-          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-      `);
-
-      return true;
-    } finally {
-      connection.release();
-    }
-  } catch (err: any) {
-    console.warn('[Database] AWS RDS Connection/Init notice:', err?.message || err);
-    return false;
->>>>>>> a4c6f303edae7e76a4c00959523468272a63f96a
   }
 }
