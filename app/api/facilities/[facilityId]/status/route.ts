@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic';
 
 const VALID_STATUSES = new Set([
   'draft', 'submitted', 'under_review', 'approved',
-  'published', 'unpublished', 'expired', 'suspended',
+  'published', 'unpublished', 'expired', 'suspended', 'deleted',
 ]);
 
 export async function PATCH(
@@ -52,10 +52,10 @@ export async function PATCH(
     }
     const current = rows[0].status as string;
 
-    // ---- 4. Integrity guard: suspended/expired are terminal from this endpoint ----
-    if (current === 'suspended' || current === 'expired') {
+    // ---- 4. Integrity guard: suspended/expired/deleted are terminal from this endpoint ----
+    if (current === 'suspended' || current === 'expired' || current === 'deleted') {
       return NextResponse.json(
-        { error: `Facility is ${current} — this state can only be changed by a Smart Crop administrator.` },
+        { error: `Facility is ${current} — this state cannot be modified from this endpoint.` },
         { status: 409 }
       );
     }
