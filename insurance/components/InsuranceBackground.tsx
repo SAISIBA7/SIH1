@@ -2,8 +2,8 @@
 
 import Image from "next/image";
 import { useResponsiveBackground } from "../hooks/useResponsiveBackground";
-import bgDefault from "../image/BG_3.png";
-import bgMobile from "../image/BG_2.png";
+import bgDefault from "../image/Bg Laptop.png";
+import bgMobile from "../image/Bg Laptop.png";
 
 /**
  * 4K Bright Natural Background Component per PRD §15 & §26.
@@ -27,7 +27,7 @@ export function InsuranceBackground() {
         className="object-cover object-center w-full h-full brightness-105"
       />
       {/* Bright, clean ambient daylight overlay */}
-      <div className="absolute inset-0 bg-white/15 pointer-events-none backdrop-blur-[1px]" />
+      <div className="absolute inset-0 bg-white/10 pointer-events-none" />
     </div>
   );
 }

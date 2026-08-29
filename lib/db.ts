@@ -9,7 +9,10 @@ const dbConfig = {
   host: process.env.DB_HOST || 'sih-mysql.cley86o8g8vx.eu-north-1.rds.amazonaws.com',
   port: Number(process.env.DB_PORT) || 3306,
   user: process.env.DB_USER || 'admin',
-  password: process.env.DB_PASSWORD || 'kFjzqqPYEQb2awh',
+<<<<<<< HEAD
+  // No hardcoded fallback — a missing DB_PASSWORD must fail loudly with an auth
+  // error rather than silently trying a stale credential.
+  password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME || 'sih',
   waitForConnections: true,
   connectionLimit: 10,
@@ -46,7 +49,7 @@ export async function query<T = any>(sql: string, values?: any[]): Promise<T> {
  */
 export async function checkDbConnection(): Promise<{ success: boolean; message: string }> {
   try {
-    const [rows] = await pool.query('SELECT 1 as connected');
+    await pool.query('SELECT 1 as connected');
     return {
       success: true,
       message: 'Successfully connected to AWS RDS MySQL database (sih).',
@@ -54,8 +57,37 @@ export async function checkDbConnection(): Promise<{ success: boolean; message: 
   } catch (error: any) {
     return {
       success: false,
-      message: `Database connection failed: ${error?.message || error}`,
+      message: `Database connection failed: ${error.message}`,
     };
+=======
+  password: process.env.DB_PASSWORD || 'kFjzqqPYEQb2awh',
+  database: process.env.DB_NAME || 'sih',
+  waitForConnections: true,
+  connectionLimit: 10,
+  maxIdle: 10,
+  idleTimeout: 60000,
+  queueLimit: 0,
+  enableKeepAlive: true,
+  keepAliveInitialDelay: 10000,
+  connectTimeout: 20000,
+  ssl: {
+    rejectUnauthorized: false
+  }
+};
+
+export const pool: Pool = global._mysqlPool || mysql.createPool(dbConfig);
+
+if (process.env.NODE_ENV !== 'production') {
+  global._mysqlPool = pool;
+}
+
+export async function query<T = any>(sql: string, params?: any[]): Promise<T> {
+  try {
+    const [rows] = await pool.execute(sql, params);
+    return rows as T;
+  } catch (err: any) {
+    console.error('[Database Query Error]:', err?.message || err);
+    throw err;
   }
 }
 
@@ -277,5 +309,6 @@ export async function initDatabase(): Promise<boolean> {
   } catch (err: any) {
     console.warn('[Database] AWS RDS Connection/Init notice:', err?.message || err);
     return false;
+>>>>>>> a4c6f303edae7e76a4c00959523468272a63f96a
   }
 }

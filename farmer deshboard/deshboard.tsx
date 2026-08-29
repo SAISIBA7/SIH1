@@ -1,8 +1,6 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { RadialBarChart, RadialBar, AreaChart, Area, ResponsiveContainer } from 'recharts';
 import { 
@@ -351,7 +349,7 @@ export default function SmartCropDashboard() {
                   transition={{ type: 'spring', stiffness: 350, damping: 30 }}
                   className="overflow-hidden whitespace-nowrap text-xs font-semibold text-[#1B1E19]"
                 >
-                  {t('profile', 'Profile')}
+                  Profile
                 </motion.span>
               </button>
             </Link>

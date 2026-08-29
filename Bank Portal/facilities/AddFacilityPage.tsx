@@ -2,7 +2,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Card, Toast, BANK_INPUT_STYLE, BANK_LABEL_STYLE, BANK_PAGE_CONTAINER_STYLE, BANK_PRIMARY_BTN_STYLE } from '../ui/BankComponents';
-import { mockFacilities } from './data';
 
 const FACILITY_TYPES = [
   'Crop Loan',
@@ -76,37 +75,47 @@ export default function AddFacilityPage() {
   });
 
   useEffect(() => {
-    if (editId) {
-      const existing = mockFacilities.find(f => f.id === editId);
-      if (existing) {
-        setForm({
-          facilityName: existing.facilityName || '',
-          facilityType: existing.facilityType || '',
-          shortDesc: existing.shortDescription || '',
-          detailedDesc: existing.detailedDescription || '',
-          status: existing.status || 'Draft',
-          minAmount: existing.minAmount || '',
-          maxAmount: existing.maxAmount || '',
-          interestRate: existing.interestRate || '',
-          tenure: existing.tenure || '',
-          repayment: existing.repayment || 'Monthly',
-          processingFee: existing.processingFee || '',
-          otherCharges: existing.otherCharges || '',
-          farmerType: existing.farmerType || [],
-          minLand: existing.minLand || '',
-          cropTypes: existing.cropTypes || [],
-          states: existing.states?.join(', ') || '',
-          districts: existing.districts?.join(', ') || '',
-          otherEligibility: existing.otherEligibility || '',
-          documents: existing.documents || [],
-          benefits: existing.benefits?.join('\n') || '',
-          termsText: existing.termsText || '',
-          termsUrl: existing.termsUrl || '',
-          applicationUrl: existing.applicationUrl || '',
+    if (editId && bankId) {
+      fetch(`/api/facilities/${encodeURIComponent(editId)}?bankId=${encodeURIComponent(bankId)}`)
+        .then(async res => {
+          if (!res.ok) {
+            const errData = await res.json().catch(() => ({}));
+            throw new Error(errData.error || 'Failed to load facility data for editing.');
+          }
+          return res.json();
+        })
+        .then(data => {
+          setForm({
+            facilityName: data.facilityName || '',
+            facilityType: data.facilityType || '',
+            shortDesc: data.shortDescription || '',
+            detailedDesc: data.detailedDescription || '',
+            status: data.status || 'Draft',
+            minAmount: data.minAmount !== null && data.minAmount !== undefined ? String(data.minAmount) : '',
+            maxAmount: data.maxAmount !== null && data.maxAmount !== undefined ? String(data.maxAmount) : '',
+            interestRate: data.interestRate || '',
+            tenure: data.tenure || '',
+            repayment: data.repayment || 'Monthly',
+            processingFee: data.processingFee || '',
+            otherCharges: data.otherCharges || '',
+            farmerType: Array.isArray(data.farmerType) ? data.farmerType : [],
+            minLand: data.minLand || '',
+            cropTypes: Array.isArray(data.cropTypes) ? data.cropTypes : [],
+            states: Array.isArray(data.states) ? data.states.join(', ') : '',
+            districts: Array.isArray(data.districts) ? data.districts.join(', ') : '',
+            otherEligibility: data.otherEligibility || '',
+            documents: Array.isArray(data.documents) ? data.documents : [],
+            benefits: Array.isArray(data.benefits) ? data.benefits.join('\n') : '',
+            termsText: data.termsText || '',
+            termsUrl: data.termsUrl || '',
+            applicationUrl: data.applicationUrl || '',
+          });
+        })
+        .catch(err => {
+          setApiError(err.message || 'Could not load facility details.');
         });
-      }
     }
-  }, [editId]);
+  }, [editId, bankId]);
 
   const ch = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
     setForm(f => ({ ...f, [e.target.name]: e.target.value }));
@@ -122,10 +131,6 @@ export default function AddFacilityPage() {
 
   const submitToApi = async (forcedStatus?: string) => {
     if (submitting) return;
-    if (editId) {
-      setApiError('Editing is not yet connected to the database — only new facility creation is wired at this stage.');
-      return;
-    }
     if (!bankId) {
       setApiError('No bank selected. Open this page with your bank id, e.g. /bank-portal/facilities/add?bankId=test_bank_001');
       return;
@@ -133,20 +138,28 @@ export default function AddFacilityPage() {
     setApiError('');
     setSubmitting(true);
     try {
-      // Map form vocabulary to DB vocabulary: 'Published' submit enters the review queue as 'submitted'.
-      const status = forcedStatus ?? (form.status.toLowerCase() === 'published' ? 'submitted' : 'draft');
-      const res = await fetch('/api/facilities/create', {
-        method: 'POST',
+      const url = editId ? `/api/facilities/${encodeURIComponent(editId)}` : '/api/facilities/create';
+      const method = editId ? 'PUT' : 'POST';
+
+      let status = form.status;
+      if (forcedStatus) {
+        status = forcedStatus;
+      } else if (!editId) {
+        status = form.status.toLowerCase() === 'published' ? 'submitted' : 'draft';
+      }
+
+      const res = await fetch(url, {
+        method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...form, bankId, status }),
       });
       const data = await res.json().catch(() => ({}) as { message?: string; error?: string });
 
       if (res.ok) {
-        showToast(data.message || 'Facility saved successfully!', 'success');
-        setTimeout(() => router.push(`/bank-portal/facilities/manage?bankId=${bankId}`), 1500);
+        showToast(data.message || (editId ? 'Facility updated successfully!' : 'Facility saved successfully!'), 'success');
+        setTimeout(() => router.push(`/bank-portal/facilities/manage?bankId=${encodeURIComponent(bankId)}`), 1500);
       } else {
-        const msg = data.error || 'Facility creation failed. Please try again.';
+        const msg = data.error || (editId ? 'Facility update failed.' : 'Facility creation failed.');
         setApiError(msg);
         showToast(msg, 'error');
       }

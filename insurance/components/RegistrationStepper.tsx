@@ -21,13 +21,30 @@ export const RegistrationStepper: React.FC<RegistrationStepperProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
 
-  const handleFinalSubmit = () => {
+  const handleFinalSubmit = async () => {
     setIsSubmitting(true);
-    setTimeout(() => {
-      setIsSubmitting(false);
+    
+    try {
+      const res = await fetch('/api/insurance/applications', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          farmerId: 'FARMER-001', // Using the mock farmer ID from the profile
+          schemeId: 'scheme-1',   // Ideally this would come from selected scheme
+          documents: documents.map(d => ({ id: d.id, status: d.status }))
+        })
+      });
+      
+      if (!res.ok) throw new Error('Submission failed');
+      
       setIsSubmitted(true);
       onComplete();
-    }, 800);
+    } catch (error) {
+      console.error('Error submitting application:', error);
+      alert('Failed to submit application. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (

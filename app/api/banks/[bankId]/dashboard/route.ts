@@ -25,9 +25,9 @@ export async function GET(
     }
     const bank = bankRows[0];
 
-    // ---- 2. Facility counts grouped by status ----
+    // ---- 2. Facility counts grouped by status (excluding deleted) ----
     const statusRows = await query<{ status: string; count: number }[]>(
-      'SELECT status, COUNT(*) AS count FROM financial_facilities WHERE bank_id = ? GROUP BY status',
+      "SELECT status, COUNT(*) AS count FROM financial_facilities WHERE bank_id = ? AND status != 'deleted' GROUP BY status",
       [bankId]
     );
     const statusCounts: Record<string, number> = {};
@@ -37,11 +37,11 @@ export async function GET(
       total += Number(row.count);
     }
 
-    // ---- 3. Five most recent facilities ----
+    // ---- 3. Five most recent facilities (excluding deleted) ----
     const recent = await query<Record<string, any>[]>(
       `SELECT id, facility_name, facility_type, status, interest_rate, updated_at
        FROM financial_facilities
-       WHERE bank_id = ?
+       WHERE bank_id = ? AND status != 'deleted'
        ORDER BY updated_at DESC
        LIMIT 5`,
       [bankId]
