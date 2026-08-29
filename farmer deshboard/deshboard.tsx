@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { RadialBarChart, RadialBar, AreaChart, Area, ResponsiveContainer } from 'recharts';
 import { 

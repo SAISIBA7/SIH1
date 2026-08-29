@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { pool } from '@/lib/db';
+import { signJwt } from '@/lib/auth-jwt';
 
 export async function POST(req: NextRequest) {
   try {
@@ -29,114 +30,154 @@ export async function POST(req: NextRequest) {
     const finalPhone = (mobileNumber || phone || '').replace(/\D/g, '').slice(-10);
     const finalEmail = email ? email.trim().toLowerCase() : null;
     const finalName = (fullName || name || username || 'Smart Crop User').trim();
+    const finalUsername = (username || finalPhone || (finalEmail ? finalEmail.split('@')[0] : '')).trim();
     const parsedArea = parseFloat(String(landArea)) || 3.50;
 
-    if ((!finalPhone && !finalEmail && !username) || !password) {
+    if ((!finalPhone && !finalEmail && !finalUsername) || !password) {
       return NextResponse.json(
         { error: { code: "validation_error", message: "Mobile number/email and password are required." } },
         { status: 400 }
       );
     }
 
-    if (password.length < 6) {
+    if (password.length < 8) {
       return NextResponse.json(
-        { error: { code: "validation_error", message: "Password must be at least 6 characters." } },
+        { error: { code: "validation_error", message: "Password must be at least 8 characters long for security." } },
         { status: 400 }
       );
     }
 
-    const saltRounds = 10;
+    // Role validation
+    const validRoles = ['farmer', 'administrator', 'bank'];
+    const normalizedRole = role === 'admin' ? 'administrator' : role;
+    if (!validRoles.includes(normalizedRole)) {
+      return NextResponse.json(
+        { error: { code: "invalid_role", message: "Invalid role specified." } },
+        { status: 400 }
+      );
+    }
+
+    const saltRounds = 12;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
     const timestamp = Date.now();
-    const farmerId = `FRM_${timestamp.toString().slice(-8)}_${Math.floor(100 + Math.random() * 900)}`;
-    const farmId = `FRM_LAND_${timestamp.toString().slice(-8)}`;
+    const prefix = normalizedRole === 'farmer' ? 'FRM' : normalizedRole === 'bank' ? 'BNK' : 'ADM';
+    const userId = `${prefix}_${timestamp.toString().slice(-8)}_${Math.floor(100 + Math.random() * 900)}`;
+    const farmId = `LAND_${timestamp.toString().slice(-8)}`;
     const cropId = `CRP_${timestamp.toString().slice(-8)}`;
 
     const connection = await pool.getConnection();
 
     try {
-      // 1. Check duplicate phone in `farmers`
-      if (finalPhone) {
-        const [existing]: any = await connection.query(
-          'SELECT id FROM farmers WHERE phone = ? LIMIT 1;',
-          [finalPhone]
-        );
+      // 1. Check duplicate in `users` and `farmers`
+      const [existingUsers]: any = await connection.query(
+        'SELECT id FROM users WHERE (phone = ? AND ? != "") OR (email = ? AND ? IS NOT NULL) OR (username = ? AND ? != "") LIMIT 1;',
+        [finalPhone, finalPhone, finalEmail, finalEmail, finalUsername, finalUsername]
+      );
 
-        if (existing && existing.length > 0) {
-          return NextResponse.json(
-            { error: { code: "duplicate_user", message: "A farmer with this mobile number already exists." } },
-            { status: 409 }
-          );
-        }
+      if (existingUsers && existingUsers.length > 0) {
+        return NextResponse.json(
+          { error: { code: "duplicate_user", message: "An account with this mobile number, email, or username already exists." } },
+          { status: 409 }
+        );
       }
 
       await connection.beginTransaction();
 
-      // 2. Insert into `farmers`
+      // 2. Insert into `users` table
       await connection.query(
-        `INSERT INTO farmers (id, name, phone, email, password_hash, district, village, language, land_area, state)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
+        `INSERT INTO users (id, email, name, phone, username, password, role, account_status, profile_id, metadata)
+         VALUES (?, ?, ?, ?, ?, ?, ?, 'active', ?, ?);`,
         [
-          farmerId,
-          finalName,
-          finalPhone || `943${timestamp.toString().slice(-7)}`,
+          userId,
           finalEmail,
+          finalName,
+          finalPhone || null,
+          finalUsername,
           hashedPassword,
-          district || 'Mayurbhanj',
-          village || 'Baripada',
-          preferredLanguage || language || 'en',
-          parsedArea,
-          state || 'Odisha',
+          normalizedRole,
+          userId,
+          JSON.stringify({
+            state: state || 'Odisha',
+            district: district || 'Mayurbhanj',
+            village: village || 'Baripada',
+            ...metadata
+          })
         ]
       );
 
-      // 3. Insert into `farms`
-      await connection.query(
-        `INSERT INTO farms (id, farmer_id, name, latitude, longitude, area, soil_type, village, district)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);`,
-        [
-          farmId,
-          farmerId,
-          `${finalName}'s Farm`,
-          21.9322000,
-          86.7483000,
-          parsedArea,
-          soilType || 'Red Loamy',
-          village || 'Baripada',
-          district || 'Mayurbhanj',
-        ]
-      );
+      // 3. If farmer, insert into `farmers`, `farms`, and `crops`
+      if (normalizedRole === 'farmer') {
+        await connection.query(
+          `INSERT INTO farmers (id, name, phone, email, password_hash, district, village, language, land_area, state)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
+          [
+            userId,
+            finalName,
+            finalPhone || `943${timestamp.toString().slice(-7)}`,
+            finalEmail,
+            hashedPassword,
+            district || 'Mayurbhanj',
+            village || 'Baripada',
+            preferredLanguage || language || 'en',
+            parsedArea,
+            state || 'Odisha',
+          ]
+        );
 
-      // 4. Insert into `crops`
-      await connection.query(
-        `INSERT INTO crops (id, farmer_id, name, stage, sowing_date)
-         VALUES (?, ?, ?, ?, ?);`,
-        [
-          cropId,
-          farmerId,
-          currentCrop || 'Rice / Paddy',
-          'Vegetative',
-          sowingDate && /^\d{4}-\d{2}-\d{2}$/.test(sowingDate) ? sowingDate : new Date().toISOString().split('T')[0],
-        ]
-      );
+        await connection.query(
+          `INSERT INTO farms (id, farmer_id, name, latitude, longitude, area, soil_type, village, district)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);`,
+          [
+            farmId,
+            userId,
+            `${finalName}'s Farm`,
+            21.9322000,
+            86.7483000,
+            parsedArea,
+            soilType || 'Red Loamy',
+            village || 'Baripada',
+            district || 'Mayurbhanj',
+          ]
+        );
+
+        await connection.query(
+          `INSERT INTO crops (id, farmer_id, name, stage, sowing_date)
+           VALUES (?, ?, ?, ?, ?);`,
+          [
+            cropId,
+            userId,
+            currentCrop || 'Rice / Paddy',
+            'Vegetative',
+            sowingDate && /^\d{4}-\d{2}-\d{2}$/.test(sowingDate) ? sowingDate : new Date().toISOString().split('T')[0],
+          ]
+        );
+      }
 
       await connection.commit();
 
+      // 4. Issue signed JWT token
+      const accessToken = signJwt({
+        id: userId,
+        name: finalName,
+        role: normalizedRole as any,
+        email: finalEmail || undefined,
+        mobileNumber: finalPhone || undefined,
+      });
+
       return NextResponse.json({
         success: true,
-        message: "User registered successfully and stored in AWS RDS (farmers, farms, crops).",
-        userId: farmerId,
-        farmerId,
-        farmId,
-        cropId,
-        role,
+        message: "User registered successfully.",
+        accessToken,
+        userId,
+        farmerId: userId,
+        role: normalizedRole,
         user: {
-          id: farmerId,
+          id: userId,
           fullName: finalName,
           email: finalEmail,
           mobileNumber: finalPhone,
-          role,
+          role: normalizedRole,
           district,
           village,
           state,
@@ -147,7 +188,7 @@ export async function POST(req: NextRequest) {
 
     } catch (dbErr: any) {
       await connection.rollback();
-      console.error('[RDS User Registration DB Error]:', dbErr);
+      console.error('[User Registration DB Error]:', dbErr);
       return NextResponse.json(
         { error: { code: "database_error", message: dbErr.message || "Failed to save user to database." } },
         { status: 500 }

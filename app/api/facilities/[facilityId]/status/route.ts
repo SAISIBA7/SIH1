@@ -1,5 +1,6 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { query } from '@/lib/db';
+import { requireAuth } from '@/lib/auth-jwt';
 
 export const dynamic = 'force-dynamic';
 
@@ -9,10 +10,15 @@ const VALID_STATUSES = new Set([
 ]);
 
 export async function PATCH(
-  req: Request,
+  req: NextRequest,
   { params }: { params: Promise<{ facilityId: string }> }
 ) {
   try {
+    const authResult = requireAuth(req, ['bank', 'administrator', 'admin']);
+    if (authResult.errorResponse) {
+      return authResult.errorResponse;
+    }
+
     // This Next.js version passes route params as a Promise
     const { facilityId } = await params;
 

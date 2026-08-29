@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { pool } from '@/lib/db';
+import { signJwt } from '@/lib/auth-jwt';
 
 export async function POST(req: NextRequest) {
   try {
@@ -20,103 +21,135 @@ export async function POST(req: NextRequest) {
 
     let authenticatedUser: any = null;
 
-    // 1. Query AWS RDS MySQL `farmers` table
+    // 1. Query database for user record across users and farmers tables
     try {
       const connection = await pool.getConnection();
       try {
-        const [farmers]: any = await connection.query(
-          `SELECT id, name, phone, email, password_hash, district, village, language, land_area, state 
-           FROM farmers 
-           WHERE (phone = ?) OR (? IS NOT NULL AND email = ?)
+        // First check 'users' table (supports farmers, admin, officers, banks)
+        const [userRows]: any = await connection.query(
+          `SELECT id, name, email, phone, username, password as password_hash, role, account_status, metadata
+           FROM users 
+           WHERE (phone = ?) OR (? IS NOT NULL AND email = ?) OR (username = ?)
            LIMIT 1;`,
-          [cleanPhone || identifier, cleanEmail, cleanEmail]
+          [cleanPhone || identifier, cleanEmail, cleanEmail, identifier]
         );
 
-        if (farmers && farmers.length > 0) {
-          const farmer = farmers[0];
-
+        if (userRows && userRows.length > 0) {
+          const user = userRows[0];
           let passwordValid = false;
-          if (farmer.password_hash) {
-            if (farmer.password_hash.startsWith('$2a$') || farmer.password_hash.startsWith('$2b$')) {
-              passwordValid = await bcrypt.compare(password, farmer.password_hash);
+
+          if (user.password_hash) {
+            if (user.password_hash.startsWith('$2a$') || user.password_hash.startsWith('$2b$')) {
+              passwordValid = await bcrypt.compare(password, user.password_hash);
             } else {
-              passwordValid = (farmer.password_hash === password);
+              passwordValid = (user.password_hash === password);
             }
           }
 
-          // Also allow demo bypass if testing with standard password
-          if (!passwordValid && (password === 'Password123!' || password === 'secret')) {
-            passwordValid = true;
-          }
-
           if (passwordValid) {
+            if (user.account_status === 'rejected' || user.account_status === 'suspended') {
+              return NextResponse.json(
+                { error: { code: "account_suspended", message: "Your account is not active or has been suspended. Please contact support." } },
+                { status: 403 }
+              );
+            }
+
             authenticatedUser = {
-              id: farmer.id,
-              fullName: farmer.name,
-              email: farmer.email || undefined,
-              mobileNumber: farmer.phone,
-              role: 'farmer',
-              accountStatus: 'active',
-              district: farmer.district,
-              village: farmer.village,
-              state: farmer.state,
-              landArea: farmer.land_area,
-              metadata: {
+              id: user.id,
+              fullName: user.name || user.username || 'Smart Crop User',
+              email: user.email || undefined,
+              mobileNumber: user.phone || undefined,
+              role: user.role === 'admin' ? 'administrator' : user.role,
+              accountStatus: user.account_status || 'active',
+              metadata: typeof user.metadata === 'string' ? JSON.parse(user.metadata) : (user.metadata || {})
+            };
+          } else {
+            return NextResponse.json(
+              { error: { code: "invalid_credentials", message: "Invalid mobile number/email or password." } },
+              { status: 401 }
+            );
+          }
+        }
+
+        // If not found in users table, check legacy 'farmers' table
+        if (!authenticatedUser) {
+          const [farmers]: any = await connection.query(
+            `SELECT id, name, phone, email, password_hash, district, village, language, land_area, state 
+             FROM farmers 
+             WHERE (phone = ?) OR (? IS NOT NULL AND email = ?)
+             LIMIT 1;`,
+            [cleanPhone || identifier, cleanEmail, cleanEmail]
+          );
+
+          if (farmers && farmers.length > 0) {
+            const farmer = farmers[0];
+            let passwordValid = false;
+
+            if (farmer.password_hash) {
+              if (farmer.password_hash.startsWith('$2a$') || farmer.password_hash.startsWith('$2b$')) {
+                passwordValid = await bcrypt.compare(password, farmer.password_hash);
+              } else {
+                passwordValid = (farmer.password_hash === password);
+              }
+            }
+
+            if (passwordValid) {
+              authenticatedUser = {
+                id: farmer.id,
+                fullName: farmer.name,
+                email: farmer.email || undefined,
+                mobileNumber: farmer.phone,
+                role: 'farmer',
+                accountStatus: 'active',
                 district: farmer.district,
                 village: farmer.village,
                 state: farmer.state,
                 landArea: farmer.land_area,
-                language: farmer.language
-              }
-            };
-          } else {
-            return NextResponse.json(
-              { error: { code: "invalid_credentials", message: "Incorrect password. Please check and try again." } },
-              { status: 401 }
-            );
+                metadata: {
+                  district: farmer.district,
+                  village: farmer.village,
+                  state: farmer.state,
+                  landArea: farmer.land_area,
+                  language: farmer.language
+                }
+              };
+            } else {
+              return NextResponse.json(
+                { error: { code: "invalid_credentials", message: "Invalid mobile number/email or password." } },
+                { status: 401 }
+              );
+            }
           }
         }
       } finally {
         connection.release();
       }
     } catch (dbErr: any) {
-      console.error('[RDS Farmers Query Error]:', dbErr);
+      console.error('[Database Auth Query Error]:', dbErr);
     }
 
-    // 2. Demo role fallback if logging in as Admin/Bank
+    // If user not found in database, return 401 unauthorized (no bypasses)
     if (!authenticatedUser) {
-      let userRole = role || 'farmer';
-      if (identifier.toLowerCase().includes('admin') || identifier.toLowerCase().includes('officer') || identifier === '9876543211') {
-        userRole = 'administrator';
-      } else if (identifier.toLowerCase().includes('bank') || identifier === '9876543212') {
-        userRole = 'bank';
-      }
-
-      authenticatedUser = {
-        id: `usr_${userRole}_${Date.now().toString().slice(-4)}`,
-        fullName: userRole === 'farmer' ? 'Ramesh Kumar Patel' : userRole === 'administrator' ? 'Dr. Anil Verma (Agronomy Officer)' : 'SBI Agri Credit Hub',
-        email: identifier.includes('@') ? identifier : `${userRole}@smartcrop.in`,
-        mobileNumber: /^\d+$/.test(identifier) ? identifier : '9876543210',
-        username: identifier,
-        role: userRole,
-        accountStatus: 'active',
-        metadata: {
-          state: 'Odisha',
-          district: 'Mayurbhanj',
-          village: 'Baripada'
-        }
-      };
+      return NextResponse.json(
+        { error: { code: "invalid_credentials", message: "Invalid credentials or account does not exist." } },
+        { status: 401 }
+      );
     }
 
-    // 3. Issue signed JWT simulation token
-    const accessToken = `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.${Buffer.from(JSON.stringify({
+    // 2. Issue genuine cryptographically signed JWT token
+    const accessToken = signJwt({
       id: authenticatedUser.id,
       name: authenticatedUser.fullName,
       role: authenticatedUser.role,
-      exp: Math.floor(Date.now() / 1000) + 3600 * 24
-    })).toString('base64url')}.smartcrop_signature`;
+      email: authenticatedUser.email,
+      mobileNumber: authenticatedUser.mobileNumber,
+    }, 86400 * 7); // 7 days expiration
 
-    const refreshToken = `eyRefreshToken.${Date.now()}.${Math.random().toString(36).substring(2)}`;
+    const refreshToken = signJwt({
+      id: authenticatedUser.id,
+      name: authenticatedUser.fullName,
+      role: authenticatedUser.role,
+    }, 86400 * 30); // 30 days expiration
 
     return NextResponse.json({
       accessToken,

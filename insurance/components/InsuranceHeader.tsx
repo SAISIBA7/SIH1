@@ -48,7 +48,7 @@ export const InsuranceHeader: React.FC<InsuranceHeaderProps> = ({
             </button>
           ) : (
             <Link
-              href="/"
+              href="/dashboard"
               className="px-3 py-1.5 rounded-xl bg-gray-100/90 hover:bg-gray-200/90 text-gray-700 text-xs font-semibold tracking-wide transition active:scale-95 flex items-center gap-1 border border-gray-200"
             >
               <span>←</span>

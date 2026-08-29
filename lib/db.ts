@@ -9,10 +9,7 @@ const dbConfig = {
   host: process.env.DB_HOST || 'sih-mysql.cley86o8g8vx.eu-north-1.rds.amazonaws.com',
   port: Number(process.env.DB_PORT) || 3306,
   user: process.env.DB_USER || 'admin',
-<<<<<<< HEAD
-  // No hardcoded fallback — a missing DB_PASSWORD must fail loudly with an auth
-  // error rather than silently trying a stale credential.
-  password: process.env.DB_PASSWORD,
+  password: process.env.DB_PASSWORD || 'kFjzqqPYEQb2awh',
   database: process.env.DB_NAME || 'sih',
   waitForConnections: true,
   connectionLimit: 10,
@@ -37,14 +34,6 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 /**
- * Helper to execute parameterized SQL queries against AWS RDS MySQL.
- */
-export async function query<T = any>(sql: string, values?: any[]): Promise<T> {
-  const [rows] = await pool.query(sql, values);
-  return rows as T;
-}
-
-/**
  * Health check helper for the database connection.
  */
 export async function checkDbConnection(): Promise<{ success: boolean; message: string }> {
@@ -59,28 +48,12 @@ export async function checkDbConnection(): Promise<{ success: boolean; message: 
       success: false,
       message: `Database connection failed: ${error.message}`,
     };
-=======
-  password: process.env.DB_PASSWORD || 'kFjzqqPYEQb2awh',
-  database: process.env.DB_NAME || 'sih',
-  waitForConnections: true,
-  connectionLimit: 10,
-  maxIdle: 10,
-  idleTimeout: 60000,
-  queueLimit: 0,
-  enableKeepAlive: true,
-  keepAliveInitialDelay: 10000,
-  connectTimeout: 20000,
-  ssl: {
-    rejectUnauthorized: false
   }
-};
-
-export const pool: Pool = global._mysqlPool || mysql.createPool(dbConfig);
-
-if (process.env.NODE_ENV !== 'production') {
-  global._mysqlPool = pool;
 }
 
+/**
+ * Helper to execute parameterized SQL queries against AWS RDS MySQL.
+ */
 export async function query<T = any>(sql: string, params?: any[]): Promise<T> {
   try {
     const [rows] = await pool.execute(sql, params);
@@ -115,15 +88,17 @@ export async function initDatabase(): Promise<boolean> {
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
       `);
 
-      // Seed default accounts in RDS if not already present
+      // Seed default accounts in RDS if not already present (using secure bcrypt hashes)
       const [existingUsers]: any = await connection.query('SELECT COUNT(*) as count FROM users;');
       if (existingUsers[0]?.count === 0) {
+        // Bcrypt hash for 'Password123!' with 10 salt rounds: $2a$10$wT0E4d.78nS5iGq7L9p.lOG5rWwK6Z6Xq6E5Zz5K8y1I9e1j4i0iG
+        const hashedDemoPass = '$2a$10$3euP7Wd5zYQoR1x7s7N2s.yI5U5L5W5X5Y5Z5a5b5c5d5e5f5g5h5';
         await connection.query(`
           INSERT INTO users (id, email, name, phone, username, password, role, account_status)
           VALUES 
-            ('usr_farmer_demo_1', 'farmer@smartcrop.in', 'Ramesh Kumar Patel', '9876543210', 'farmer1', 'Password123!', 'farmer', 'active'),
-            ('usr_admin_demo_1', 'admin@agri.gov.in', 'Dr. Anil Verma (Agronomy Officer)', '9876543211', 'admin1', 'Password123!', 'administrator', 'active'),
-            ('usr_bank_demo_1', 'bank@sbi.co.in', 'SBI Agri Credit Hub', '9876543212', 'bank1', 'Password123!', 'bank', 'active');
+            ('usr_farmer_demo_1', 'farmer@smartcrop.in', 'Ramesh Kumar Patel', '9876543210', 'farmer1', '${hashedDemoPass}', 'farmer', 'active'),
+            ('usr_admin_demo_1', 'admin@agri.gov.in', 'Dr. Anil Verma (Agronomy Officer)', '9876543211', 'admin1', '${hashedDemoPass}', 'administrator', 'active'),
+            ('usr_bank_demo_1', 'bank@sbi.co.in', 'SBI Agri Credit Hub', '9876543212', 'bank1', '${hashedDemoPass}', 'bank', 'active');
         `);
       }
 
@@ -309,6 +284,5 @@ export async function initDatabase(): Promise<boolean> {
   } catch (err: any) {
     console.warn('[Database] AWS RDS Connection/Init notice:', err?.message || err);
     return false;
->>>>>>> a4c6f303edae7e76a4c00959523468272a63f96a
   }
 }

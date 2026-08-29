@@ -3,11 +3,10 @@ import { SarvamAIClient } from 'sarvamai';
 const SARVAM_API_KEY =
   process.env.SARVAM_API_KEY ||
   process.env.NEXT_PUBLIC_SARVAM_API_KEY ||
-  process.env.NEXT_PUBLIC_CLERK_LANGUAGE ||
-  'sk_cp3z4img_VFPPoSzUXLUZj1hE1WbH8o0O';
+  '';
 
 export const sarvamClient = new SarvamAIClient({
-  apiSubscriptionKey: SARVAM_API_KEY,
+  apiSubscriptionKey: SARVAM_API_KEY || 'unconfigured_sarvam_key',
 });
 
 /**

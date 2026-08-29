@@ -13,6 +13,8 @@
     "@insforge/sdk": "^1.5.2",
     "@reduxjs/toolkit": "^2.12.0",
     "@supabase/supabase-js": "^2.49.1",
+    "@types/bcryptjs": "^2.4.6",
+    "bcryptjs": "^3.0.3",
     "framer-motion": "^13.1.1",
     "lucide-react": "^1.34.0",
     "mysql2": "^3.24.2",

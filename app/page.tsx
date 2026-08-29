@@ -1,10 +1,11 @@
-import FarmerDashboard from "@/farmer deshboard/deshboard";
+import { redirect } from "next/navigation";
 
 export const metadata = {
-  title: "Smart Crop | Farmer Dashboard",
-  description: "AI-Powered Farm Intelligence, Crop Advisory, Mandi Prices and Financial Support.",
+  title: "Smart Crop | Authentication",
+  description: "Smart Crop authentication and login portal.",
 };
 
 export default function Home() {
-  return <FarmerDashboard />;
+  redirect("/authentication");
 }
+
