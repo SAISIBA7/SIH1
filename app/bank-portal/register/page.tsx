@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import BankRegisterPage from "@/Bank Portal/register/BankRegisterPage";
 
 export const metadata = {

@@ -26,6 +26,7 @@ import {
   Store,
   Check
 } from "lucide-react";
+import FarmerTaskManager from "@/farmer profile/FarmerTaskManager";
 
 export default function FarmerProfilePage() {
   // Master Farmer State (following PRD specs & mock data)
@@ -684,7 +685,7 @@ export default function FarmerProfilePage() {
                     <p className="text-xs text-[#526a57] mt-0.5">Farm 01 • Sown: {farmer.sowingDate} • Stage: {farmer.cropStage}</p>
                   </div>
                   <button
-                    onClick={() => showToast("Navigating to detailed Crop Diagnostic Guide...")}
+                    onClick={() => router.push('/crop-details')}
                     className="px-3 py-1.5 bg-[#1c2e22] text-[#d8e678] text-xs font-semibold rounded-xl flex items-center gap-1 hover:bg-black transition shadow-sm"
                   >
                     <span>View Crop</span>

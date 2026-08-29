@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { RadialBarChart, RadialBar, AreaChart, Area, ResponsiveContainer } from 'recharts';
 import { 
@@ -289,6 +290,7 @@ export default function SmartCropDashboard() {
 
             {/* Notification Bell */}
             <button
+              onClick={() => router.push('/notifications')}
               onMouseEnter={() => setHoveredAction('bell')}
               onMouseLeave={() => setHoveredAction(null)}
               className={`h-11 rounded-full flex items-center justify-center bg-white/80 hover:bg-white border border-black/6 hover:border-black/15 transition-all duration-300 shadow-sm relative cursor-pointer group ${
@@ -319,6 +321,7 @@ export default function SmartCropDashboard() {
 
             {/* Profile User */}
             <button
+              onClick={() => router.push('/farmer-profile')}
               onMouseEnter={() => setHoveredAction('user')}
               onMouseLeave={() => setHoveredAction(null)}
               className={`h-11 rounded-full flex items-center justify-center bg-white/80 hover:bg-white border border-black/6 hover:border-black/15 transition-all duration-300 shadow-sm relative cursor-pointer group ${

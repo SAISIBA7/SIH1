@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import GovernmentDashboardView from "@/components/government/GovernmentDashboardView";
 
 export const metadata = {

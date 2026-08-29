@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import AlternativeCropPage from "@/Alternative crop/Alternative crop";
 
 export const metadata = {

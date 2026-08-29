@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import NotificationDetailPage from "@/notification page/NotificationDetail";
 
 export const metadata = {

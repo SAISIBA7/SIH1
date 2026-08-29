@@ -2,7 +2,20 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Sprout, Droplets, Thermometer, Layers, CheckCircle2, BookOpen } from 'lucide-react';
+import { ArrowLeft, Sprout, Droplets, Layers, CheckCircle2, BookOpen } from 'lucide-react';
+import bgImage from '../farmer profile/image/BG_2.png';
+import CropDetailsCalendar from './CropDetailsCalendar';
+
+interface CalendarTask {
+  task: string;
+  dueInDays: number;
+}
+
+interface CropCalendar {
+  completed: string[];
+  today: { task: string; description?: string };
+  upcoming: CalendarTask[];
+}
 
 interface CropInfo {
   id: string;
@@ -23,6 +36,7 @@ interface CropInfo {
   };
   criticalIrrigationStages: string[];
   keyPests: string[];
+  calendar: CropCalendar;
 }
 
 const CROPS_CATALOG: CropInfo[] = [
@@ -43,8 +57,26 @@ const CROPS_CATALOG: CropInfo[] = [
       potassium: '20 kg K2O / acre',
       zinc: '10 kg ZnSO4 / acre',
     },
-    criticalIrrigationStages: ['Transplanting stage', 'Tillering stage (20-25 DAT)', 'Panicle initiation (45-50 DAT)', 'Grain filling stage'],
+    criticalIrrigationStages: [
+      'Transplanting stage',
+      'Tillering stage (20-25 DAT)',
+      'Panicle initiation (45-50 DAT)',
+      'Grain filling stage',
+    ],
     keyPests: ['Yellow Stem Borer', 'Brown Plant Hopper (BPH)', 'Bacterial Leaf Blight', 'Blast disease'],
+    calendar: {
+      completed: ['Land preparation', 'Sowing'],
+      today: {
+        task: 'Soil moisture inspection',
+        description: 'Check root-zone moisture levels across all plots — ensure adequate field capacity.',
+      },
+      upcoming: [
+        { task: 'Fertilizer application', dueInDays: 5 },
+        { task: 'Weed management', dueInDays: 9 },
+        { task: 'Disease monitoring', dueInDays: 15 },
+        { task: 'Panicle initiation irrigation', dueInDays: 22 },
+      ],
+    },
   },
   {
     id: 'mustard',
@@ -65,6 +97,19 @@ const CROPS_CATALOG: CropInfo[] = [
     },
     criticalIrrigationStages: ['Flowering initiation (30-35 DAS)', 'Pod development (55-65 DAS)'],
     keyPests: ['Mustard Aphid', 'White Rust', 'Alternaria Blight', 'Painted Bug'],
+    calendar: {
+      completed: ['Land preparation', 'Sowing', 'First irrigation'],
+      today: {
+        task: 'Aphid scouting',
+        description: 'Inspect leaves for aphid colonies — apply treatment if density exceeds 50 per plant.',
+      },
+      upcoming: [
+        { task: 'Flowering irrigation', dueInDays: 5 },
+        { task: 'Fungicide spray (Alternaria)', dueInDays: 10 },
+        { task: 'Pod development irrigation', dueInDays: 18 },
+        { task: 'Harvest readiness check', dueInDays: 30 },
+      ],
+    },
   },
   {
     id: 'maize',
@@ -83,17 +128,46 @@ const CROPS_CATALOG: CropInfo[] = [
       potassium: '24 kg K2O / acre',
       zinc: '10 kg ZnSO4 / acre',
     },
-    criticalIrrigationStages: ['Knee-high vegetative stage (30-35 DAS)', 'Tasseling & Silking stage (50-60 DAS)', 'Grain filling stage (75-80 DAS)'],
+    criticalIrrigationStages: [
+      'Knee-high vegetative stage (30-35 DAS)',
+      'Tasseling & Silking stage (50-60 DAS)',
+      'Grain filling stage (75-80 DAS)',
+    ],
     keyPests: ['Fall Armyworm (FAW)', 'Stem Borer', 'Turcicum Leaf Blight'],
+    calendar: {
+      completed: ['Land preparation', 'Basal fertilizer application', 'Sowing'],
+      today: {
+        task: 'Soil moisture inspection',
+        description: 'Ensure field capacity moisture at knee-high stage for optimal root development.',
+      },
+      upcoming: [
+        { task: 'FAW scouting & spray', dueInDays: 5 },
+        { task: 'Top dressing (Nitrogen)', dueInDays: 9 },
+        { task: 'Tasseling irrigation', dueInDays: 15 },
+        { task: 'Grain filling irrigation', dueInDays: 25 },
+      ],
+    },
   },
 ];
 
 export default function CropDetails() {
   const [selectedCrop, setSelectedCrop] = useState<CropInfo>(CROPS_CATALOG[0]);
+  const cal = selectedCrop.calendar;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50/40 to-lime-50 text-slate-900 p-4 md:p-8">
-      <div className="max-w-6xl mx-auto space-y-6">
+    <div className="min-h-screen text-slate-900 p-4 md:p-8 relative">
+      {/* Background Image Layer */}
+      <div className="fixed inset-0 -z-10 pointer-events-none">
+        <div
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          style={{ backgroundImage: `url('${bgImage.src}')` }}
+        />
+        {/* White Blurry Overlay */}
+        <div className="absolute inset-0 bg-white/30 backdrop-blur-sm" />
+      </div>
+
+      <div className="max-w-6xl mx-auto space-y-6 relative z-10">
+
         {/* Navigation */}
         <div className="flex items-center justify-between flex-wrap gap-4">
           <Link
@@ -127,11 +201,10 @@ export default function CropDetails() {
               <button
                 key={c.id}
                 onClick={() => setSelectedCrop(c)}
-                className={`py-2 px-4 rounded-xl font-bold text-sm transition-all cursor-pointer ${
-                  selectedCrop.id === c.id
-                    ? 'bg-emerald-600 text-white shadow-md'
-                    : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
-                }`}
+                className={`py-2 px-4 rounded-xl font-bold text-sm transition-all cursor-pointer ${selectedCrop.id === c.id
+                  ? 'bg-emerald-600 text-white shadow-md'
+                  : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+                  }`}
               >
                 {c.name.split('(')[0]}
               </button>
@@ -139,7 +212,7 @@ export default function CropDetails() {
           </div>
         </div>
 
-        {/* Main Content Area */}
+        {/* Main 2-col grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Soil & Climate Requirements */}
           <div className="bg-white/90 backdrop-blur-md rounded-2xl p-6 border border-white/80 shadow-md space-y-4">
@@ -148,34 +221,23 @@ export default function CropDetails() {
               Soil &amp; Climate Requirements
             </h3>
             <div className="space-y-3 text-sm">
-              <div className="flex justify-between py-1.5 border-b border-slate-50">
-                <span className="text-slate-500 font-medium">Ideal Soil Type</span>
-                <span className="font-semibold text-slate-800 text-right max-w-xs">{selectedCrop.idealSoil}</span>
-              </div>
-              <div className="flex justify-between py-1.5 border-b border-slate-50">
-                <span className="text-slate-500 font-medium">Soil pH Range</span>
-                <span className="font-bold text-emerald-700">{selectedCrop.soilPh}</span>
-              </div>
-              <div className="flex justify-between py-1.5 border-b border-slate-50">
-                <span className="text-slate-500 font-medium">Optimal Temperature</span>
-                <span className="font-semibold text-slate-800">{selectedCrop.tempRange}</span>
-              </div>
-              <div className="flex justify-between py-1.5 border-b border-slate-50">
-                <span className="text-slate-500 font-medium">Total Water Need</span>
-                <span className="font-semibold text-blue-700">{selectedCrop.waterRequirement}</span>
-              </div>
-              <div className="flex justify-between py-1.5 border-b border-slate-50">
-                <span className="text-slate-500 font-medium">Sowing Depth &amp; Spacing</span>
-                <span className="font-semibold text-slate-800">{selectedCrop.sowingDepth} · {selectedCrop.spacing}</span>
-              </div>
-              <div className="flex justify-between py-1.5">
-                <span className="text-slate-500 font-medium">Recommended Seed Rate</span>
-                <span className="font-semibold text-slate-800">{selectedCrop.seedRate}</span>
-              </div>
+              {[
+                { label: 'Ideal Soil Type', value: selectedCrop.idealSoil, cls: 'font-semibold text-slate-800 text-right max-w-xs' },
+                { label: 'Soil pH Range', value: selectedCrop.soilPh, cls: 'font-bold text-emerald-700' },
+                { label: 'Optimal Temperature', value: selectedCrop.tempRange, cls: 'font-semibold text-slate-800' },
+                { label: 'Total Water Need', value: selectedCrop.waterRequirement, cls: 'font-semibold text-blue-700' },
+                { label: 'Sowing Depth & Spacing', value: `${selectedCrop.sowingDepth} · ${selectedCrop.spacing}`, cls: 'font-semibold text-slate-800' },
+                { label: 'Recommended Seed Rate', value: selectedCrop.seedRate, cls: 'font-semibold text-slate-800' },
+              ].map((row, i, arr) => (
+                <div key={i} className={`flex justify-between py-1.5 ${i < arr.length - 1 ? 'border-b border-slate-50' : ''}`}>
+                  <span className="text-slate-500 font-medium">{row.label}</span>
+                  <span className={row.cls}>{row.value}</span>
+                </div>
+              ))}
             </div>
           </div>
 
-          {/* Fertilizer Dose (NPK+Zn) */}
+          {/* Fertilizer Dose */}
           <div className="bg-white/90 backdrop-blur-md rounded-2xl p-6 border border-white/80 shadow-md space-y-4">
             <h3 className="font-bold text-base text-slate-900 flex items-center gap-2 border-b border-slate-100 pb-3">
               <Sprout className="w-5 h-5 text-emerald-600" />
@@ -199,7 +261,6 @@ export default function CropDetails() {
                 <div className="text-lg font-black text-amber-900 mt-1">{selectedCrop.fertilizerDose.zinc}</div>
               </div>
             </div>
-
             <div className="pt-2">
               <h4 className="font-bold text-xs uppercase tracking-wider text-slate-500 mb-2">
                 Critical Irrigation Stages
@@ -215,6 +276,14 @@ export default function CropDetails() {
             </div>
           </div>
         </div>
+
+        {/* ═══════════════════════════════════════════════════════ */}
+        {/* FARMING CALENDAR — Full Width, Large & Prominent       */}
+        {/* ═══════════════════════════════════════════════════════ */}
+        <div className="bg-white/90 backdrop-blur-md rounded-2xl border border-white/80 shadow-md overflow-hidden p-12">
+          <CropDetailsCalendar cropId={selectedCrop.id} />
+        </div>
+
       </div>
     </div>
   );

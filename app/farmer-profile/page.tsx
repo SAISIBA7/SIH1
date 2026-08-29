@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import FarmerProfilePage from "@/farmer profile/farmer profile";
 
 export const metadata = {

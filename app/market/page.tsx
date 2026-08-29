@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import MarketPage from "@/marketpage/marketpage";
 
 export const metadata = {

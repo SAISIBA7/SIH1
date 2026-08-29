@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import { Suspense } from 'react';
 import BankDashboardPage from '@/Bank Portal/dashboard/BankDashboardPage';
 
