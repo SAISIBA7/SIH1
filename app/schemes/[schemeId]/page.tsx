@@ -1,10 +1,12 @@
-import SchemeDetailsPage from "@/Government equipment schemes/SchemeDetails";
+import { redirect } from "next/navigation";
 
 export const metadata = {
   title: "Smart Crop | Scheme Application & Subsidy Roadmap",
   description: "Government Scheme Milestone Timeline, Document Checklist & Direct Application.",
 };
 
-export default function Page() {
-  return <SchemeDetailsPage />;
+// Scheme details are managed by the SchemeHub store on /schemes.
+// Deep-linking to a specific scheme ID redirects to the hub.
+export default function Page({ params }: { params: { schemeId: string } }) {
+  redirect("/schemes");
 }

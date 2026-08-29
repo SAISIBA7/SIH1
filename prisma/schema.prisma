@@ -1,0 +1,533 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Farmer {
+  id                 String              @id @db.VarChar(30)
+  name               String              @db.VarChar(150)
+  phone              String              @unique(map: "uq_farmers_phone") @db.VarChar(15)
+  email              String?             @db.VarChar(255)
+  password_hash      String?             @db.VarChar(255)
+  district           String              @db.VarChar(100)
+  village            String              @db.VarChar(50)
+  language           String              @db.VarChar(30)
+  landArea           Decimal             @map("land_area") @db.Decimal(6, 2)
+  loanAmount         Decimal?            @map("loan_amount") @db.Decimal(12, 2)
+  loanDueDate        DateTime?           @map("loan_due_date") @db.Date
+  createdAt          DateTime            @default(now()) @map("created_at") @db.Timestamp(0)
+  state              String              @default("") @db.VarChar(100)
+  bookings           Booking[]
+  crop_risk          crop_risk[]
+  crops              Crop[]
+  equipmentRentals   EquipmentRental[]
+  farms              Farm[]
+  insurance          Insurance[]
+  interventions      Intervention[]
+  loans              Loan[]
+  notifications      notifications[]
+  riskHistory        RiskHistory[]
+  riskScores         RiskScore[]
+  schemeApplications SchemeApplication[]
+
+  @@map("farmers")
+}
+
+model Farm {
+  id                   String                 @id @db.VarChar(30)
+  farmerId             String                 @map("farmer_id") @db.VarChar(30)
+  name                 String                 @db.VarChar(150)
+  latitude             Decimal                @db.Decimal(10, 7)
+  longitude            Decimal                @db.Decimal(10, 7)
+  area                 Decimal                @db.Decimal(10, 2)
+  soilType             String                 @map("soil_type") @db.VarChar(100)
+  village              String                 @db.VarChar(150)
+  district             String                 @db.VarChar(100)
+  farmer               Farmer                 @relation(fields: [farmerId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_farms_farmer")
+  weather_observations weather_observations[] @ignore
+
+  @@index([farmerId], map: "idx_farms_farmer")
+  @@map("farms")
+}
+
+model Crop {
+  id          String        @id @db.VarChar(30)
+  farmerId    String        @map("farmer_id") @db.VarChar(30)
+  name        String        @db.VarChar(100)
+  stage       String        @db.VarChar(50)
+  sowingDate  DateTime      @map("sowing_date") @db.Date
+  crop_risk   crop_risk[]
+  farmer      Farmer        @relation(fields: [farmerId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_crops_farmer")
+  riskHistory RiskHistory[]
+
+  @@index([farmerId], map: "idx_crops_farmer")
+  @@map("crops")
+}
+
+model RiskScore {
+  id           String   @id @db.VarChar(30)
+  farmerId     String   @map("farmer_id") @db.VarChar(30)
+  score        Int      @db.UnsignedTinyInt
+  rainfallRisk Int      @map("rainfall_risk") @db.UnsignedTinyInt
+  marketRisk   Int      @map("market_risk") @db.UnsignedTinyInt
+  loanRisk     Int      @map("loan_risk") @db.UnsignedTinyInt
+  reasons      Json
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamp(0)
+  farmer       Farmer   @relation(fields: [farmerId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_risk_scores_farmer")
+
+  @@index([farmerId, createdAt], map: "idx_risk_scores_farmer_time")
+  @@map("risk_scores")
+}
+
+model RiskHistory {
+  id           String   @id @db.VarChar(30)
+  farmerId     String   @map("farmer_id") @db.VarChar(30)
+  cropId       String   @map("crop_id") @db.VarChar(30)
+  riskScore    Int      @map("risk_score") @db.UnsignedTinyInt
+  calculatedAt DateTime @default(now()) @map("calculated_at") @db.Timestamp(0)
+  crop         Crop     @relation(fields: [cropId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_risk_history_crop")
+  farmer       Farmer   @relation(fields: [farmerId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_risk_history_farmer")
+
+  @@index([cropId], map: "idx_risk_history_crop")
+  @@index([farmerId], map: "idx_risk_history_farmer")
+  @@index([cropId, calculatedAt], map: "idx_risk_history_time")
+  @@map("risk_history")
+}
+
+model Bank {
+  id                   String                    @id @db.VarChar(30)
+  bankName             String                    @map("bank_name") @db.VarChar(255)
+  institution_type     String                    @db.VarChar(100)
+  official_website     String                    @db.VarChar(500)
+  official_email       String                    @unique(map: "official_email") @db.VarChar(255)
+  official_phone       String?                   @db.VarChar(20)
+  description          String?                   @db.Text
+  logo_url             String?                   @db.VarChar(500)
+  registered_address   String?                   @db.Text
+  state                String?                   @db.VarChar(100)
+  district             String?                   @db.VarChar(100)
+  verification_status  banks_verification_status @default(draft)
+  created_at           DateTime                  @default(now()) @db.Timestamp(0)
+  updated_at           DateTime                  @default(now()) @db.Timestamp(0)
+  bank_users           bank_users[]
+  financial_facilities financial_facilities[]
+  loans                Loan[]
+
+  @@map("banks")
+}
+
+model Loan {
+  id                String   @id @db.VarChar(30)
+  farmerId          String   @map("farmer_id") @db.VarChar(30)
+  bankId            String   @map("bank_id") @db.VarChar(30)
+  loanType          String   @map("loan_type") @db.VarChar(100)
+  principal_amount  Decimal  @db.Decimal(12, 2)
+  outstandingAmount Decimal  @map("outstanding_amount") @db.Decimal(12, 2)
+  dueDate           DateTime @map("due_date") @db.Date
+  status            String   @db.VarChar(30)
+  bank              Bank     @relation(fields: [bankId], references: [id], onUpdate: NoAction, map: "fk_loans_bank")
+  farmer            Farmer   @relation(fields: [farmerId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_loans_farmer")
+
+  @@index([bankId], map: "idx_loans_bank")
+  @@index([dueDate], map: "idx_loans_due_date")
+  @@index([farmerId], map: "idx_loans_farmer")
+  @@map("loans")
+}
+
+model Scheme {
+  id                          String                        @id @db.VarChar(30)
+  name                        String                        @db.VarChar(200)
+  state                       String                        @db.VarChar(100)
+  eligibility                 String                        @db.Text
+  documents                   Json
+  application_url             String                        @db.VarChar(500)
+  schemeApplications          SchemeApplication[]
+  scheme_eligibility_criteria scheme_eligibility_criteria[]
+
+  @@map("schemes")
+}
+
+model SchemeApplication {
+  id                           String                         @id @db.VarChar(30)
+  farmerId                     String                         @map("farmer_id") @db.VarChar(30)
+  schemeId                     String                         @map("scheme_id") @db.VarChar(30)
+  eligibility_percent          Int                            @db.UnsignedTinyInt
+  matched_reasons              Json
+  status                       scheme_applications_status     @default(not_applied)
+  rejection_reason             String?                        @db.VarChar(255)
+  submitted_at                 DateTime?                      @db.Timestamp(0)
+  decided_at                   DateTime?                      @db.Timestamp(0)
+  scheme_application_documents scheme_application_documents[]
+  farmer                       Farmer                         @relation(fields: [farmerId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_scheme_app_farmer")
+  scheme                       Scheme                         @relation(fields: [schemeId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_scheme_app_scheme")
+
+  @@unique([farmerId, schemeId], map: "uq_farmer_scheme")
+  @@index([farmerId], map: "idx_scheme_applications_farmer")
+  @@index([schemeId], map: "idx_scheme_applications_scheme")
+  @@map("scheme_applications")
+}
+
+model Insurance {
+  id       String @id @db.VarChar(30)
+  farmerId String @map("farmer_id") @db.VarChar(30)
+  crop     String @db.VarChar(100)
+  status   String @db.VarChar(30)
+  farmer   Farmer @relation(fields: [farmerId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_insurance_farmer")
+
+  @@index([farmerId], map: "idx_insurance_farmer")
+  @@map("insurance")
+}
+
+model Intervention {
+  id           String    @id @db.VarChar(30)
+  officer_id   String    @db.VarChar(30)
+  farmerId     String    @map("farmer_id") @db.VarChar(30)
+  risk_id      String    @db.VarChar(30)
+  type         String    @db.VarChar(100)
+  priority     String    @db.VarChar(30)
+  status       String    @db.VarChar(30)
+  notes        String?   @db.Text
+  assigned_at  DateTime  @default(now()) @db.Timestamp(0)
+  completed_at DateTime? @db.Timestamp(0)
+  farmer       Farmer    @relation(fields: [farmerId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_interventions_farmer")
+  crop_risk    crop_risk @relation(fields: [risk_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_interventions_risk")
+
+  @@index([farmerId], map: "idx_interventions_farmer")
+  @@index([officer_id], map: "idx_interventions_officer")
+  @@index([risk_id], map: "idx_interventions_risk")
+  @@map("interventions")
+}
+
+model Booking {
+  id           String    @id @db.VarChar(30)
+  farmerId     String    @map("farmer_id") @db.VarChar(30)
+  equipment_id String    @db.VarChar(30)
+  start_date   DateTime  @db.Date
+  end_date     DateTime  @db.Date
+  status       String    @db.VarChar(30)
+  equipment    equipment @relation(fields: [equipment_id], references: [id], onUpdate: NoAction, map: "fk_bookings_equipment")
+  farmer       Farmer    @relation(fields: [farmerId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_bookings_farmer")
+
+  @@index([equipment_id], map: "idx_bookings_equipment")
+  @@index([farmerId], map: "idx_bookings_farmer")
+  @@map("bookings")
+}
+
+model EquipmentRental {
+  id           String    @id @db.VarChar(30)
+  equipment_id String    @db.VarChar(30)
+  farmerId     String    @map("farmer_id") @db.VarChar(30)
+  start_time   DateTime  @db.DateTime(0)
+  end_time     DateTime  @db.DateTime(0)
+  duration     Decimal   @db.Decimal(10, 2)
+  total_cost   Decimal   @db.Decimal(12, 2)
+  status       String    @db.VarChar(30)
+  equipment    equipment @relation(fields: [equipment_id], references: [id], onUpdate: NoAction, map: "fk_equipment_rentals_equipment")
+  farmer       Farmer    @relation(fields: [farmerId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_equipment_rentals_farmer")
+
+  @@index([equipment_id], map: "idx_equipment_rentals_equipment")
+  @@index([farmerId], map: "idx_equipment_rentals_farmer")
+  @@index([start_time, end_time], map: "idx_equipment_rentals_time")
+  @@map("equipment_rentals")
+}
+
+model bank_applications {
+  id          String    @id @db.VarChar(64)
+  farmer_id   String?   @db.VarChar(64)
+  farmer_name String?   @db.VarChar(255)
+  crop_name   String?   @db.VarChar(100)
+  loan_type   String?   @default("Kisan Credit Card (KCC)") @db.VarChar(100)
+  amount      Decimal?  @default(0.00) @db.Decimal(12, 2)
+  status      String?   @default("Under Review") @db.VarChar(50)
+  applied_at  DateTime? @default(now()) @db.Timestamp(0)
+}
+
+model bank_users {
+  id            String            @id @db.VarChar(30)
+  bank_id       String            @db.VarChar(30)
+  name          String            @db.VarChar(150)
+  email         String            @unique(map: "email") @db.VarChar(255)
+  phone         String?           @db.VarChar(20)
+  password_hash String            @db.VarChar(255)
+  role          bank_users_role   @default(staff)
+  status        bank_users_status @default(active)
+  created_at    DateTime          @default(now()) @db.Timestamp(0)
+  banks         Bank              @relation(fields: [bank_id], references: [id], onDelete: Cascade, map: "fk_bankusers_bank")
+
+  @@index([bank_id], map: "fk_bankusers_bank")
+}
+
+model crop_risk {
+  id                String         @id @db.VarChar(30)
+  farmer_id         String         @db.VarChar(30)
+  crop_id           String         @db.VarChar(30)
+  risk_score        Int            @db.UnsignedTinyInt
+  risk_level        String         @db.VarChar(30)
+  weather_score     Int            @db.UnsignedTinyInt
+  soil_score        Int            @db.UnsignedTinyInt
+  crop_health_score Int            @db.UnsignedTinyInt
+  market_score      Int            @db.UnsignedTinyInt
+  financial_score   Int            @db.UnsignedTinyInt
+  calculated_at     DateTime       @default(now()) @db.Timestamp(0)
+  crops             Crop           @relation(fields: [crop_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_crop_risk_crop")
+  farmers           Farmer         @relation(fields: [farmer_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_crop_risk_farmer")
+  interventions     Intervention[]
+
+  @@index([crop_id], map: "idx_crop_risk_crop")
+  @@index([farmer_id], map: "idx_crop_risk_farmer")
+}
+
+model equipment {
+  id                String            @id @db.VarChar(30)
+  name              String            @db.VarChar(100)
+  type              String            @db.VarChar(100)
+  owner             String            @db.VarChar(100)
+  location          String            @db.VarChar(255)
+  price_per_hour    Decimal           @db.Decimal(10, 2)
+  availability      Boolean           @default(true)
+  bookings          Booking[]
+  equipment_rentals EquipmentRental[]
+}
+
+model facility_analytics {
+  id                   Int                           @id @default(autoincrement()) @db.UnsignedInt
+  facility_id          String                        @db.VarChar(30)
+  event_type           facility_analytics_event_type
+  farmer_location      String?                       @db.VarChar(200)
+  created_at           DateTime                      @default(now()) @db.Timestamp(0)
+  financial_facilities financial_facilities          @relation(fields: [facility_id], references: [id], onDelete: Cascade, map: "fk_analytics_facility")
+
+  @@index([facility_id], map: "fk_analytics_facility")
+}
+
+model facility_benefits {
+  id                   String               @id @db.VarChar(30)
+  facility_id          String               @db.VarChar(30)
+  benefit              String               @db.Text
+  financial_facilities financial_facilities @relation(fields: [facility_id], references: [id], onDelete: Cascade, map: "fk_benefits_facility")
+
+  @@index([facility_id], map: "fk_benefits_facility")
+}
+
+model facility_documents {
+  id                   String               @id @db.VarChar(30)
+  facility_id          String               @db.VarChar(30)
+  document_name        String               @db.VarChar(150)
+  description          String?              @db.Text
+  is_required          Boolean              @default(true)
+  financial_facilities financial_facilities @relation(fields: [facility_id], references: [id], onDelete: Cascade, map: "fk_documents_facility")
+
+  @@index([facility_id], map: "fk_documents_facility")
+}
+
+model facility_eligibility {
+  id                   String               @id @db.VarChar(30)
+  facility_id          String               @unique(map: "facility_id") @db.VarChar(30)
+  farmer_type          String?              @db.VarChar(100)
+  minimum_land         String?              @db.VarChar(50)
+  maximum_land         String?              @db.VarChar(50)
+  crop_types           Json?
+  states               Json?
+  districts            Json?
+  other_conditions     String?              @db.Text
+  financial_facilities financial_facilities @relation(fields: [facility_id], references: [id], onDelete: Cascade, map: "fk_eligibility_facility")
+}
+
+model facility_terms {
+  id                   String               @id @db.VarChar(30)
+  facility_id          String               @db.VarChar(30)
+  version              String               @default("1.0") @db.VarChar(20)
+  terms_text           String               @db.Text
+  effective_date       DateTime?            @db.Date
+  created_at           DateTime             @default(now()) @db.Timestamp(0)
+  financial_facilities financial_facilities @relation(fields: [facility_id], references: [id], onDelete: Cascade, map: "fk_terms_facility")
+
+  @@index([facility_id], map: "fk_terms_facility")
+}
+
+model financial_facilities {
+  id                      String                      @id @db.VarChar(30)
+  bank_id                 String                      @db.VarChar(30)
+  facility_name           String                      @db.VarChar(255)
+  facility_type           String                      @db.VarChar(100)
+  description             String?                     @db.Text
+  minimum_amount          Decimal?                    @db.Decimal(12, 2)
+  maximum_amount          Decimal?                    @db.Decimal(12, 2)
+  interest_rate           String?                     @db.VarChar(100)
+  tenure                  String?                     @db.VarChar(100)
+  repayment_frequency     String?                     @db.VarChar(50)
+  processing_fee          String?                     @db.VarChar(255)
+  eligibility_description String?                     @db.Text
+  status                  financial_facilities_status @default(draft)
+  application_url         String?                     @db.VarChar(500)
+  terms_url               String?                     @db.VarChar(500)
+  created_at              DateTime                    @default(now()) @db.Timestamp(0)
+  updated_at              DateTime                    @default(now()) @db.Timestamp(0)
+  expiry_date             DateTime?                   @db.Date
+  facility_analytics      facility_analytics[]
+  facility_benefits       facility_benefits[]
+  facility_documents      facility_documents[]
+  facility_eligibility    facility_eligibility?
+  facility_terms          facility_terms[]
+  banks                   Bank                        @relation(fields: [bank_id], references: [id], onDelete: Cascade, map: "fk_facilities_bank")
+
+  @@index([bank_id], map: "fk_facilities_bank")
+}
+
+model mandi_prices {
+  id             String   @id @db.VarChar(30)
+  crop_id        String   @db.VarChar(30)
+  mandi_name     String   @db.VarChar(150)
+  district       String   @db.VarChar(100)
+  modal_price    Decimal  @db.Decimal(10, 2)
+  price_date     DateTime @db.Date
+  mandi_location String?  @db.VarChar(255)
+  price          Decimal? @db.Decimal(10, 2)
+  min_price      Decimal? @db.Decimal(10, 2)
+  max_price      Decimal? @db.Decimal(10, 2)
+  msp            Decimal? @db.Decimal(10, 2)
+
+  @@index([crop_id, district, price_date], map: "idx_mandi_prices_lookup")
+}
+
+model notifications {
+  id               String                       @id @db.VarChar(30)
+  user_id          String                       @db.VarChar(30)
+  farmer_id        String                       @db.VarChar(30)
+  type             String                       @db.VarChar(50)
+  category         String?                      @db.VarChar(50)
+  priority         notifications_priority
+  title            String                       @db.VarChar(200)
+  message          String                       @db.Text
+  body             Json?
+  voice_text       String?                      @db.Text
+  language         String?                      @default("en") @db.VarChar(10)
+  action_label     String?                      @db.VarChar(100)
+  action_url       String?                      @db.VarChar(300)
+  action_status    notifications_action_status? @default(not_required)
+  source_feature   String?                      @db.VarChar(50)
+  source_entity_id String?                      @db.VarChar(50)
+  correlation_id   String?                      @db.VarChar(50)
+  is_read          Boolean                      @default(false)
+  read_at          DateTime?                    @db.DateTime(0)
+  created_at       DateTime                     @default(now()) @db.Timestamp(0)
+  farmers          Farmer                       @relation(fields: [farmer_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_notifications_farmer")
+
+  @@index([farmer_id, created_at], map: "idx_notifications_farmer_time")
+  @@index([farmer_id, is_read], map: "idx_notifications_farmer_unread")
+}
+
+model scheme_application_documents {
+  id                  String                              @id @db.VarChar(30)
+  application_id      String                              @db.VarChar(30)
+  document_name       String                              @db.VarChar(150)
+  status              scheme_application_documents_status @default(missing)
+  updated_at          DateTime                            @default(now()) @db.Timestamp(0)
+  scheme_applications SchemeApplication                   @relation(fields: [application_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_sad_application")
+
+  @@index([application_id], map: "idx_sad_application")
+}
+
+model scheme_eligibility_criteria {
+  id         String @id @db.VarChar(30)
+  scheme_id  String @db.VarChar(30)
+  field_name String @db.VarChar(100)
+  operator   String @db.VarChar(20)
+  value      String @db.VarChar(255)
+  schemes    Scheme @relation(fields: [scheme_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_sec_scheme")
+
+  @@index([scheme_id], map: "idx_sec_scheme")
+}
+
+model users {
+  id         String    @id @db.VarChar(100)
+  email      String?   @db.VarChar(255)
+  name       String?   @db.VarChar(255)
+  role       String    @default("farmer") @db.VarChar(50)
+  profile_id String?   @db.VarChar(100)
+  created_at DateTime? @default(now()) @db.Timestamp(0)
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model weather_observations {
+  farm_id           String   @db.VarChar(30)
+  temperature       Decimal  @db.Decimal(5, 2)
+  rainfall          Decimal  @db.Decimal(8, 2)
+  humidity          Decimal  @db.Decimal(5, 2)
+  forecast_rainfall Decimal? @db.Decimal(8, 2)
+  recorded_at       DateTime @default(now()) @db.Timestamp(0)
+  source            String   @db.VarChar(100)
+  farms             Farm     @relation(fields: [farm_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_weather_farm")
+
+  @@index([farm_id], map: "idx_weather_farm")
+  @@index([farm_id, recorded_at], map: "idx_weather_recorded")
+  @@ignore
+}
+
+enum facility_analytics_event_type {
+  VIEW
+  TERMS_VIEW
+  APPLY_CLICK
+}
+
+enum scheme_application_documents_status {
+  missing
+  ready
+}
+
+enum notifications_priority {
+  critical
+  warning
+  info
+}
+
+enum scheme_applications_status {
+  not_applied
+  submitted
+  verification
+  approved
+  rejected
+}
+
+enum bank_users_role {
+  admin
+  staff
+}
+
+enum bank_users_status {
+  active
+  inactive
+  suspended
+}
+
+enum banks_verification_status {
+  draft
+  submitted
+  under_review
+  verified
+  rejected
+  suspended
+}
+
+enum financial_facilities_status {
+  draft
+  submitted
+  under_review
+  approved
+  published
+  unpublished
+  expired
+  suspended
+}
+
+enum notifications_action_status {
+  not_required
+  required
+  in_progress
+  completed
+  expired
+}
