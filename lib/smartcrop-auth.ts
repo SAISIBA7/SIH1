@@ -270,7 +270,7 @@ export const smartCropAuth = {
   },
 
   /**
-   * Log in with Email & Password
+   * Log in with Email & Password (validates directly with AWS RDS MySQL)
    */
   async loginWithEmail(email: string, password: string): Promise<UserSession> {
     const cleanEmail = email.trim().toLowerCase();
@@ -282,58 +282,27 @@ export const smartCropAuth = {
       throw new Error('Please enter your password.');
     }
 
-    // 1. Check local persistent accounts database first
-    const stored = findStoredAccount(cleanEmail);
-    if (stored) {
-      if (stored.passwordHash === password) {
-        const session: UserSession = {
-          id: stored.id,
-          role: stored.role,
-          fullName: stored.fullName,
-          email: stored.email,
-          mobileNumber: stored.mobileNumber,
-          accountStatus: stored.accountStatus,
-          metadata: stored.metadata,
-        };
-        this.saveSession(session);
-
-        // Attempt background InsForge sign-in to sync tokens if available
-        insforge.auth
-          .signInWithPassword({ email: cleanEmail, password })
-          .catch(() => {});
-
-        return session;
-      } else {
-        throw new Error('Incorrect password. Please check and try again.');
-      }
-    }
-
-    // 2. Fallback to InsForge Cloud Auth
+    // 1. Primary: Authenticate with AWS RDS MySQL via backend API
     try {
-      const { data, error } = await insforge.auth.signInWithPassword({
-        email: cleanEmail,
-        password,
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: cleanEmail, password }),
       });
 
-      if (error) {
-        throw new Error(this.formatErrorMessage(error.message || 'Invalid email or password.'));
-      }
-
-      if (data?.user) {
-        const profile = (data.user.profile as any) || {};
-        const metadata = (data.user.metadata as any) || {};
-
+      const data = await res.json();
+      if (res.ok && data?.user) {
+        const u = data.user;
         const session: UserSession = {
-          id: data.user.id,
-          role: profile.role || metadata.role || 'farmer',
-          fullName: profile.name || cleanEmail.split('@')[0],
-          email: cleanEmail,
-          mobileNumber: profile.mobile_number || metadata.mobile_number,
-          accountStatus: profile.account_status || 'active',
-          metadata: { ...metadata, ...profile },
+          id: u.id,
+          role: u.role || 'farmer',
+          fullName: u.fullName || cleanEmail.split('@')[0],
+          email: u.email || cleanEmail,
+          mobileNumber: u.mobileNumber,
+          accountStatus: u.accountStatus || 'active',
+          metadata: u.metadata || {},
         };
 
-        // Cache in stored accounts
         saveStoredAccount({
           id: session.id,
           role: session.role,
@@ -348,10 +317,32 @@ export const smartCropAuth = {
 
         this.saveSession(session);
         return session;
+      } else if (data?.error?.code === 'invalid_credentials') {
+        throw new Error(data.error.message);
       }
-    } catch (insErr: any) {
-      if (insErr.message && !insErr.message.includes('Invalid login details')) {
-        throw insErr;
+    } catch (apiErr: any) {
+      if (apiErr.message && apiErr.message.includes('Incorrect password')) {
+        throw apiErr;
+      }
+    }
+
+    // 2. Fallback: Check local persistent accounts cache
+    const stored = findStoredAccount(cleanEmail);
+    if (stored) {
+      if (stored.passwordHash === password) {
+        const session: UserSession = {
+          id: stored.id,
+          role: stored.role,
+          fullName: stored.fullName,
+          email: stored.email,
+          mobileNumber: stored.mobileNumber,
+          accountStatus: stored.accountStatus,
+          metadata: stored.metadata,
+        };
+        this.saveSession(session);
+        return session;
+      } else {
+        throw new Error('Incorrect password. Please check and try again.');
       }
     }
 
@@ -359,7 +350,7 @@ export const smartCropAuth = {
   },
 
   /**
-   * Log in with Mobile Number & Password
+   * Log in with Mobile Number & Password (validates directly with AWS RDS MySQL)
    */
   async loginWithMobile(mobileNumber: string, password: string): Promise<UserSession> {
     const cleanPhone = normalizeIndianPhone(mobileNumber);
@@ -371,7 +362,51 @@ export const smartCropAuth = {
       throw new Error('Please enter your password.');
     }
 
-    // 1. Check local persistent accounts database
+    // 1. Primary: Authenticate with AWS RDS MySQL via backend API
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mobileNumber: cleanPhone, password }),
+      });
+
+      const data = await res.json();
+      if (res.ok && data?.user) {
+        const u = data.user;
+        const session: UserSession = {
+          id: u.id,
+          role: u.role || 'farmer',
+          fullName: u.fullName || `Farmer ${cleanPhone.slice(-4)}`,
+          email: u.email,
+          mobileNumber: u.mobileNumber || cleanPhone,
+          accountStatus: u.accountStatus || 'active',
+          metadata: u.metadata || {},
+        };
+
+        saveStoredAccount({
+          id: session.id,
+          role: session.role,
+          fullName: session.fullName,
+          email: u.email,
+          mobileNumber: cleanPhone,
+          passwordHash: password,
+          accountStatus: session.accountStatus,
+          createdAt: new Date().toISOString(),
+          metadata: session.metadata || {},
+        });
+
+        this.saveSession(session);
+        return session;
+      } else if (data?.error?.code === 'invalid_credentials') {
+        throw new Error(data.error.message);
+      }
+    } catch (apiErr: any) {
+      if (apiErr.message && apiErr.message.includes('Incorrect password')) {
+        throw apiErr;
+      }
+    }
+
+    // 2. Fallback: Check local persistent accounts database
     const stored = findStoredAccount(cleanPhone);
     if (stored) {
       if (stored.passwordHash === password) {
@@ -385,85 +420,23 @@ export const smartCropAuth = {
           metadata: stored.metadata,
         };
         this.saveSession(session);
-
-        // Attempt background InsForge sign-in to sync tokens
-        const targetEmail = stored.email || phoneToEmail(cleanPhone);
-        insforge.auth
-          .signInWithPassword({ email: targetEmail, password })
-          .catch(() => {});
-
         return session;
       } else {
         throw new Error('Incorrect password. Please check and try again.');
       }
     }
 
-    // 2. Try InsForge Cloud with virtual phone email
-    const authEmail = phoneToEmail(cleanPhone);
-    try {
-      const { data, error } = await insforge.auth.signInWithPassword({
-        email: authEmail,
-        password,
-      });
-
-      if (!error && data?.user) {
-        const profile = (data.user.profile as any) || {};
-        const metadata = (data.user.metadata as any) || {};
-
-        const session: UserSession = {
-          id: data.user.id,
-          role: profile.role || metadata.role || 'farmer',
-          fullName: profile.name || `Farmer ${cleanPhone.slice(-4)}`,
-          mobileNumber: cleanPhone,
-          accountStatus: profile.account_status || 'active',
-          metadata: { ...metadata, ...profile },
-        };
-
-        saveStoredAccount({
-          id: session.id,
-          role: session.role,
-          fullName: session.fullName,
-          mobileNumber: cleanPhone,
-          passwordHash: password,
-          accountStatus: session.accountStatus,
-          createdAt: new Date().toISOString(),
-          metadata: session.metadata || {},
-        });
-
-        this.saveSession(session);
-        return session;
-      }
-    } catch {
-      // ignore
-    }
-
     throw new Error('No account found for this mobile number. Please register first.');
   },
 
   /**
-   * Register Farmer Account
+   * Register Farmer Account (persists to AWS RDS MySQL)
    */
   async registerFarmer(data: FarmerRegistrationData): Promise<UserSession> {
     const cleanPhone = normalizeIndianPhone(data.mobileNumber);
     if (!isValidIndianPhone(cleanPhone)) {
       throw new Error('Please enter a valid 10-digit Indian mobile number.');
     }
-
-    // Check duplicate
-    const existing = findStoredAccount(cleanPhone);
-    if (existing) {
-      throw new Error('An account with this mobile number already exists. Please log in.');
-    }
-
-    if (data.email && isValidEmail(data.email)) {
-      const existingEmail = findStoredAccount(data.email);
-      if (existingEmail) {
-        throw new Error('An account with this email address already exists. Please log in.');
-      }
-    }
-
-    const userId = `usr_farmer_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
-    const authEmail = data.email && isValidEmail(data.email) ? data.email.trim().toLowerCase() : phoneToEmail(cleanPhone);
 
     const metadata = {
       state: data.state,
@@ -477,6 +450,39 @@ export const smartCropAuth = {
       dateOfBirth: data.dateOfBirth || '',
     };
 
+    let userId = `FRM_${Date.now()}`;
+
+    // 1. Save directly to AWS RDS MySQL via dedicated backend API
+    try {
+      const res = await fetch('/api/farmer/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fullName: data.fullName.trim(),
+          mobileNumber: cleanPhone,
+          email: data.email?.trim().toLowerCase(),
+          password: data.password,
+          state: data.state,
+          district: data.district,
+          village: data.village,
+          landArea: data.landArea,
+          currentCrop: data.currentCrop,
+          sowingDate: data.sowingDate,
+          preferredLanguage: data.preferredLanguage,
+        }),
+      });
+
+      const resData = await res.json();
+      if (!res.ok) {
+        throw new Error(resData?.error?.message || 'Failed to register farmer in AWS RDS.');
+      }
+      if (resData?.farmerId) {
+        userId = resData.farmerId;
+      }
+    } catch (apiErr: any) {
+      throw apiErr;
+    }
+
     const newAccount: StoredUserAccount = {
       id: userId,
       role: 'farmer',
@@ -489,39 +495,14 @@ export const smartCropAuth = {
       metadata,
     };
 
-    // Save to persistent database
+    // Cache locally
     saveStoredAccount(newAccount);
-
-    // Save cloud user if InsForge connected
-    try {
-      await insforge.auth.signUp({
-        email: authEmail,
-        password: data.password,
-        name: data.fullName.trim(),
-      });
-      const { data: signInData } = await insforge.auth.signInWithPassword({
-        email: authEmail,
-        password: data.password,
-      });
-      if (signInData?.user) {
-        await insforge.auth.setProfile({
-          role: 'farmer',
-          name: data.fullName.trim(),
-          mobile_number: cleanPhone,
-          state: data.state,
-          district: data.district,
-          account_status: 'active',
-        });
-      }
-    } catch (e) {
-      // Cloud signup is optional best-effort
-    }
 
     const session: UserSession = {
       id: userId,
       role: 'farmer',
       fullName: data.fullName.trim(),
-      email: data.email,
+      email: data.email?.trim().toLowerCase(),
       mobileNumber: cleanPhone,
       accountStatus: 'active',
       metadata,

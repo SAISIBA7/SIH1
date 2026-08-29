@@ -1,4 +1,4 @@
-import RiskDetailsView from "@/components/risk/RiskDetailsView";
+import RiskDetailsPage from "@/Risk Detail Page/Risk Detail Page";
 
 export const metadata = {
   title: "Smart Crop | Crop Distress Risk Details",
@@ -6,5 +6,5 @@ export const metadata = {
 };
 
 export default function Page() {
-  return <RiskDetailsView />;
+  return <RiskDetailsPage />;
 }

@@ -1,14 +1,70 @@
+<<<<<<< HEAD
+import mysql from 'mysql2/promise';
+
+declare global {
+  // eslint-disable-next-line no-var
+  var mysqlPool: mysql.Pool | undefined;
+=======
 import mysql, { Pool } from 'mysql2/promise';
 
 declare global {
   var _mysqlPool: Pool | undefined;
+>>>>>>> a4c6f303edae7e76a4c00959523468272a63f96a
 }
 
 const dbConfig = {
   host: process.env.DB_HOST || 'sih-mysql.cley86o8g8vx.eu-north-1.rds.amazonaws.com',
   port: Number(process.env.DB_PORT) || 3306,
   user: process.env.DB_USER || 'admin',
-  password: process.env.DB_PASSWORD || 'Suguda123',
+<<<<<<< HEAD
+  // No hardcoded fallback — a missing DB_PASSWORD must fail loudly with an auth
+  // error rather than silently trying a stale credential.
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME || 'sih',
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0,
+  connectTimeout: 10000,
+  ssl: {
+    rejectUnauthorized: false,
+  },
+};
+
+// Singleton connection pool across serverless / dev hot-reloads
+export const pool: mysql.Pool =
+  global.mysqlPool ||
+  mysql.createPool(dbConfig);
+
+if (process.env.NODE_ENV !== 'production') {
+  global.mysqlPool = pool;
+}
+
+/**
+ * Helper to execute parameterized SQL queries against AWS RDS MySQL.
+ */
+export async function query<T = any>(sql: string, values?: any[]): Promise<T> {
+  const [rows] = await pool.query(sql, values);
+  return rows as T;
+}
+
+/**
+ * Health check helper for the database connection.
+ */
+export async function checkDbConnection(): Promise<{ success: boolean; message: string }> {
+  try {
+    const [rows] = await pool.query('SELECT 1 as connected');
+    return {
+      success: true,
+      message: 'Successfully connected to AWS RDS MySQL database (sih).',
+    };
+  } catch (error: any) {
+    console.error('AWS RDS MySQL connection error:', error.message);
+    return {
+      success: false,
+      message: `Database connection failed: ${error.message}`,
+    };
+=======
+  password: process.env.DB_PASSWORD || 'kFjzqqPYEQb2awh',
   database: process.env.DB_NAME || 'sih',
   waitForConnections: true,
   connectionLimit: 10,
@@ -17,7 +73,7 @@ const dbConfig = {
   queueLimit: 0,
   enableKeepAlive: true,
   keepAliveInitialDelay: 10000,
-  connectTimeout: 5000,
+  connectTimeout: 20000,
   ssl: {
     rejectUnauthorized: false
   }
@@ -50,14 +106,30 @@ export async function initDatabase(): Promise<boolean> {
       await connection.query(`
         CREATE TABLE IF NOT EXISTS users (
           id VARCHAR(100) PRIMARY KEY,
-          email VARCHAR(255) UNIQUE,
+          email VARCHAR(255),
           name VARCHAR(255),
           phone VARCHAR(32),
+          username VARCHAR(255),
+          password VARCHAR(255),
           role VARCHAR(50) NOT NULL DEFAULT 'farmer',
+          account_status VARCHAR(50) NOT NULL DEFAULT 'active',
           profile_id VARCHAR(100),
+          metadata JSON,
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
       `);
+
+      // Seed default accounts in RDS if not already present
+      const [existingUsers]: any = await connection.query('SELECT COUNT(*) as count FROM users;');
+      if (existingUsers[0]?.count === 0) {
+        await connection.query(`
+          INSERT INTO users (id, email, name, phone, username, password, role, account_status)
+          VALUES 
+            ('usr_farmer_demo_1', 'farmer@smartcrop.in', 'Ramesh Kumar Patel', '9876543210', 'farmer1', 'Password123!', 'farmer', 'active'),
+            ('usr_admin_demo_1', 'admin@agri.gov.in', 'Dr. Anil Verma (Agronomy Officer)', '9876543211', 'admin1', 'Password123!', 'administrator', 'active'),
+            ('usr_bank_demo_1', 'bank@sbi.co.in', 'SBI Agri Credit Hub', '9876543212', 'bank1', 'Password123!', 'bank', 'active');
+        `);
+      }
 
       // 2. Farmers Profile table
       await connection.query(`
@@ -241,5 +313,6 @@ export async function initDatabase(): Promise<boolean> {
   } catch (err: any) {
     console.warn('[Database] AWS RDS Connection/Init notice:', err?.message || err);
     return false;
+>>>>>>> a4c6f303edae7e76a4c00959523468272a63f96a
   }
 }

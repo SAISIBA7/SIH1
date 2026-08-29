@@ -1,22 +1,157 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { Card, Toggle, Toast, BANK_PAGE_CONTAINER_STYLE, BANK_PRIMARY_BTN_STYLE } from '../ui/BankComponents';
-import { mockFacilities } from './data';
+
+interface FacilityRow {
+  id: string;
+  facilityName: string;
+  facilityType: string;
+  status: string;
+  minimumAmount: number | null;
+  maximumAmount: number | null;
+  interestRate: string | null;
+  tenure: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// DB status -> display label + badge colors (8 statuses in financial_facilities)
+const STATUS_DISPLAY: Record<string, { label: string; bg: string; color: string; border: string }> = {
+  published:    { label: 'Published',    bg: '#dcfce7', color: '#166534', border: '#bbf7d0' },
+  draft:        { label: 'Draft',        bg: '#fef3c7', color: '#b45309', border: '#fde68a' },
+  submitted:    { label: 'Submitted',    bg: '#dbeafe', color: '#1e40af', border: '#bfdbfe' },
+  under_review: { label: 'Under Review', bg: '#f5f3ff', color: '#7c3aed', border: '#ddd6fe' },
+  approved:     { label: 'Approved',     bg: '#ecfdf5', color: '#065f46', border: '#a7f3d0' },
+  unpublished:  { label: 'Unpublished',  bg: '#f1f5f9', color: '#475569', border: '#e2e8f0' },
+  expired:      { label: 'Expired',      bg: '#f1f5f9', color: '#475569', border: '#e2e8f0' },
+  suspended:    { label: 'Suspended',    bg: '#fef2f2', color: '#991b1b', border: '#fecaca' },
+};
+
+const NEUTRAL_STATUS = { label: '', bg: '#f1f5f9', color: '#475569', border: '#e2e8f0' };
+
+const fmtDate = (iso: string) =>
+  new Date(iso).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+
+const fmtINR = (v: number | null) =>
+  v === null
+    ? '—'
+    : new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(v);
 
 export default function ManageFacilitiesPage() {
-  const [facilities, setFacilities] = useState(mockFacilities.filter(f => f.bankId === 'b1'));
+  const searchParams = useSearchParams();
+  const bankId = searchParams?.get('bankId') ?? '';
+  const [bankName, setBankName] = useState('');
+  const [facilities, setFacilities] = useState<FacilityRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [toast, setToast] = useState('');
+  const [toastType, setToastType] = useState<'success' | 'error'>('success');
+  const [togglingId, setTogglingId] = useState<string | null>(null);
 
-  const togglePublish = (id: string) => {
-    setFacilities(prev => prev.map(f => {
-      if (f.id !== id) return f;
-      const next: import('./data').FacilityStatus = f.status === 'Published' ? 'Draft' : 'Published';
-      setToast(next === 'Published' ? 'Facility published successfully!' : 'Facility unpublished and saved as draft.');
-      setTimeout(() => setToast(''), 3000);
-      return { ...f, status: next };
-    }));
+  const showToast = (message: string, type: 'success' | 'error' = 'success') => {
+    setToast(message);
+    setToastType(type);
+    setTimeout(() => setToast(''), 3000);
   };
+
+  const loadFacilities = useCallback(async (showLoading = true) => {
+    if (!bankId) {
+      setError('No bank selected. Open this page with your bank id, e.g. /bank-portal/facilities/manage?bankId=bank_xxx');
+      setLoading(false);
+      return;
+    }
+    if (showLoading) setLoading(true);
+    try {
+      const res = await fetch(`/api/banks/${encodeURIComponent(bankId)}/facilities`);
+      const json = await res.json().catch(() => ({}) as { error?: string });
+      if (res.ok) {
+        setBankName(json.bank.bankName);
+        setFacilities(json.facilities);
+        setError('');
+      } else {
+        setError(json.error || `Failed to load facilities (HTTP ${res.status}).`);
+      }
+    } catch {
+      setError('Network error — could not reach the server.');
+    } finally {
+      if (showLoading) setLoading(false);
+    }
+  }, [bankId]);
+
+  useEffect(() => {
+    loadFacilities();
+  }, [loadFacilities]);
+
+  // Toggle semantics: checked === 'published'.
+  // Clicking from ANY non-published status (draft, submitted, under_review, approved,
+  // unpublished) publishes directly — per Decision 1, the PRD lifecycle
+  // DRAFT → SUBMITTED → UNDER REVIEW → APPROVED → PUBLISHED is NOT enforced until a
+  // real admin review step exists. Clicking while published returns to 'draft'.
+  // The API independently blocks transitions INTO 'suspended' and OUT OF
+  // 'suspended'/'expired' (admin-only states) — those cards fail with a clear toast.
+  const togglePublish = async (f: FacilityRow) => {
+    if (togglingId) return;
+    const target = f.status === 'published' ? 'draft' : 'published';
+    setTogglingId(f.id);
+    try {
+      const res = await fetch(`/api/facilities/${encodeURIComponent(f.id)}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: target }),
+      });
+      const data = await res.json().catch(() => ({}) as { error?: string });
+      if (res.ok) {
+        showToast(
+          target === 'published'
+            ? 'Facility published successfully!'
+            : 'Facility unpublished and saved as draft.',
+          'success'
+        );
+        await loadFacilities(false); // silent refetch — refreshes badges, toggle positions, sort order
+      } else {
+        showToast(data.error || 'Status update failed. Please try again.', 'error');
+      }
+    } catch {
+      showToast('Network error — could not reach the server.', 'error');
+    } finally {
+      setTogglingId(null);
+    }
+  };
+
+  // Editing stays unwired — no UPDATE endpoint exists yet
+  const notConnected = (action: string) =>
+    showToast(`${action} is not yet connected to the database — this listing is read-only at this stage.`, 'error');
+
+  // ---- Loading state ----
+  if (loading) {
+    return (
+      <div style={BANK_PAGE_CONTAINER_STYLE}>
+        <div style={{ maxWidth: '920px', margin: '0 auto', textAlign: 'center', padding: '5rem 1rem' }}>
+          <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>📋</div>
+          <p style={{ color: '#475569', fontWeight: 700 }}>Loading facilities…</p>
+        </div>
+      </div>
+    );
+  }
+
+  // ---- Error state ----
+  if (error) {
+    return (
+      <div style={BANK_PAGE_CONTAINER_STYLE}>
+        <div style={{ maxWidth: '640px', margin: '0 auto', paddingTop: '3rem' }}>
+          <Card>
+            <div style={{ textAlign: 'center', padding: '2rem 1rem' }}>
+              <div style={{ fontSize: '2.2rem', marginBottom: '0.75rem' }}>⚠️</div>
+              <h2 style={{ color: '#991b1b', margin: '0 0 0.5rem' }}>Could not load facilities</h2>
+              <p style={{ color: '#475569', margin: 0 }}>{error}</p>
+            </div>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={BANK_PAGE_CONTAINER_STYLE}>
@@ -46,11 +181,11 @@ export default function ManageFacilitiesPage() {
               Manage Facilities
             </h1>
             <p style={{ color: '#475569', fontSize: '1rem', margin: 0 }}>
-              ABC Rural Bank · <strong>{facilities.length}</strong> listed facilities
+              {bankName} · <strong>{facilities.length}</strong> listed facilities
             </p>
           </div>
           <Link
-            href="/bank-portal/facilities/add"
+            href={`/bank-portal/facilities/add?bankId=${bankId}`}
             className="add-facility-btn"
             style={BANK_PRIMARY_BTN_STYLE}
           >
@@ -60,85 +195,98 @@ export default function ManageFacilitiesPage() {
 
         {/* Facility Cards List */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-          {facilities.map(f => (
-            <Card key={f.id} hoverEffect={true}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1.25rem' }}>
-                <div style={{ flex: 1, minWidth: '240px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.4rem', flexWrap: 'wrap' }}>
-                    <span style={{ fontWeight: 800, color: '#0f172a', fontSize: '1.15rem' }}>{f.facilityName}</span>
-                    <span
-                      style={{
-                        padding: '0.3rem 0.8rem',
-                        borderRadius: '20px',
-                        fontSize: '0.75rem',
-                        fontWeight: 800,
-                        boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-                        background: f.status === 'Published' ? '#dcfce7' : f.status === 'Draft' ? '#fef3c7' : '#f5f3ff',
-                        color: f.status === 'Published' ? '#166534' : f.status === 'Draft' ? '#b45309' : '#7c3aed',
-                        border: `1px solid ${f.status === 'Published' ? '#bbf7d0' : f.status === 'Draft' ? '#fde68a' : '#ddd6fe'}`,
-                      }}
-                    >
-                      {f.status}
-                    </span>
-                  </div>
-                  <div style={{ color: '#475569', fontSize: '0.88rem', fontWeight: 500 }}>
-                    {f.facilityType} · <strong style={{ color: '#166534' }}>{f.interestRate}</strong> · Updated {f.lastUpdated}
-                  </div>
-                  <div style={{ color: '#64748b', fontSize: '0.82rem', marginTop: '0.35rem' }}>
-                    Amount: <strong style={{ color: '#0f172a' }}>{f.minAmount} – {f.maxAmount}</strong> · Tenure: {f.tenure}
-                  </div>
-                </div>
-
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-                  <div style={{ background: '#f8fafd', padding: '0.5rem 0.85rem', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
-                    <Toggle
-                      checked={f.status === 'Published'}
-                      onChange={() => togglePublish(f.id)}
-                      label={f.status === 'Published' ? 'Published' : 'Draft'}
-                    />
-                  </div>
-                  <Link
-                    href={`/bank-portal/facilities/add?id=${f.id}`}
-                    className="facility-action-link"
-                    style={{
-                      color: '#166534',
-                      fontWeight: 700,
-                      fontSize: '0.88rem',
-                      textDecoration: 'none',
-                      padding: '0.55rem 1rem',
-                      border: '1.5px solid #bbf7d0',
-                      borderRadius: '8px',
-                      background: '#ffffff',
-                    }}
-                  >
-                    ✏️ Edit
-                  </Link>
-                  <Link
-                    href={`/financial-support/detail?id=${f.id}`}
-                    className="facility-action-link"
-                    style={{
-                      color: '#475569',
-                      fontWeight: 700,
-                      fontSize: '0.88rem',
-                      textDecoration: 'none',
-                      padding: '0.55rem 1rem',
-                      border: '1.5px solid #e2e8f0',
-                      borderRadius: '8px',
-                      background: '#ffffff',
-                    }}
-                  >
-                    👁️ View
-                  </Link>
-                </div>
+          {facilities.length === 0 ? (
+            <Card>
+              <div style={{ textAlign: 'center', padding: '2.5rem 1rem' }}>
+                <div style={{ fontSize: '2.2rem', marginBottom: '0.75rem' }}>📋</div>
+                <p style={{ color: '#475569', fontSize: '0.98rem', margin: 0 }}>
+                  No facilities yet — click "+ Add New Facility" to create your first listing.
+                </p>
               </div>
             </Card>
-          ))}
+          ) : (
+            facilities.map(f => {
+              const sd = STATUS_DISPLAY[f.status] ?? { ...NEUTRAL_STATUS, label: f.status };
+              return (
+                <Card key={f.id} hoverEffect={true}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1.25rem' }}>
+                    <div style={{ flex: 1, minWidth: '240px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.4rem', flexWrap: 'wrap' }}>
+                        <span style={{ fontWeight: 800, color: '#0f172a', fontSize: '1.15rem' }}>{f.facilityName}</span>
+                        <span
+                          style={{
+                            padding: '0.3rem 0.8rem',
+                            borderRadius: '20px',
+                            fontSize: '0.75rem',
+                            fontWeight: 800,
+                            boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                            background: sd.bg,
+                            color: sd.color,
+                            border: `1px solid ${sd.border}`,
+                          }}
+                        >
+                          {sd.label}
+                        </span>
+                      </div>
+                      <div style={{ color: '#475569', fontSize: '0.88rem', fontWeight: 500 }}>
+                        {f.facilityType} · <strong style={{ color: '#166534' }}>{f.interestRate || '—'}</strong> · Updated {fmtDate(f.updatedAt)}
+                      </div>
+                      <div style={{ color: '#64748b', fontSize: '0.82rem', marginTop: '0.35rem' }}>
+                        Amount: <strong style={{ color: '#0f172a' }}>{fmtINR(f.minimumAmount)} – {fmtINR(f.maximumAmount)}</strong> · Tenure: {f.tenure || '—'}
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+                      <div style={{ background: '#f8fafd', padding: '0.5rem 0.85rem', borderRadius: '10px', border: '1px solid #e2e8f0', opacity: togglingId === f.id ? 0.5 : 1, transition: 'opacity 0.15s ease' }}>
+                        <Toggle
+                          checked={f.status === 'published'}
+                          onChange={() => togglePublish(f)}
+                          label={sd.label}
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => notConnected('Editing')}
+                        className="facility-action-link"
+                        style={{
+                          color: '#166534',
+                          fontWeight: 700,
+                          fontSize: '0.88rem',
+                          padding: '0.55rem 1rem',
+                          border: '1.5px solid #bbf7d0',
+                          borderRadius: '8px',
+                          background: '#ffffff',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        ✏️ Edit
+                      </button>
+                      <Link
+                        href={`/financial-support/detail?id=${f.id}`}
+                        className="facility-action-link"
+                        style={{
+                          color: '#475569',
+                          fontWeight: 700,
+                          fontSize: '0.88rem',
+                          textDecoration: 'none',
+                          padding: '0.55rem 1rem',
+                          border: '1.5px solid #e2e8f0',
+                          borderRadius: '8px',
+                          background: '#ffffff',
+                        }}
+                      >
+                        👁️ View
+                      </Link>
+                    </div>
+                  </div>
+                </Card>
+              );
+            })
+          )}
         </div>
       </div>
 
-      {toast && <Toast message={toast} />}
+      {toast && <Toast message={toast} type={toastType} />}
     </div>
   );
 }
-
-

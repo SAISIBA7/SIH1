@@ -1,10 +1,15 @@
-import BankDashboardPage from "@/Bank Portal/dashboard/BankDashboardPage";
+import { Suspense } from 'react';
+import BankDashboardPage from '@/Bank Portal/dashboard/BankDashboardPage';
 
 export const metadata = {
-  title: "Smart Crop | Bank Partner Dashboard",
-  description: "Disbursement Oversight, Credit Portfolio Health & Farmer Loan Applications.",
+  title: 'Bank Dashboard | Smart Crop Partner Portal',
+  description: 'Manage bank profile, loan facilities, and farmer applications.',
 };
 
-export default function Page() {
-  return <BankDashboardPage />;
+export default function DashboardRoute() {
+  return (
+    <Suspense fallback={<div style={{ padding: '2rem', textAlign: 'center' }}>Loading dashboard...</div>}>
+      <BankDashboardPage />
+    </Suspense>
+  );
 }

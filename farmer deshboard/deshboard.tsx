@@ -57,11 +57,11 @@ export default function SmartCropDashboard() {
   }, []);
 
   const navLinks = [
-    { id: 'home', label: 'Home', icon: Home, href: '#' },
-    { id: 'risk', label: 'Risk', icon: ShieldAlert, href: '#risk' },
-    { id: 'advisory', label: 'Advisory', icon: Sparkles, href: '#advisory' },
-    { id: 'market', label: 'Market', icon: TrendingUp, href: '#market' },
-    { id: 'schemes', label: 'Schemes', icon: Landmark, href: '#schemes' },
+    { id: 'home', label: 'Home', icon: Home, href: '/dashboard' },
+    { id: 'risk', label: 'Risk', icon: ShieldAlert, href: '/risk-details' },
+    { id: 'advisory', label: 'Advisory', icon: Sparkles, href: '/crop-monitoring' },
+    { id: 'market', label: 'Market', icon: TrendingUp, href: '/market' },
+    { id: 'schemes', label: 'Schemes', icon: Landmark, href: '/schemes' },
   ];
 
   useEffect(() => {
@@ -185,8 +185,9 @@ export default function SmartCropDashboard() {
               const isExpanded = isActive || isHovered;
 
               return (
-                <button
+                <Link
                   key={item.id}
+                  href={item.href}
                   onClick={() => setActiveNav(item.id)}
                   onMouseEnter={() => setHoveredNav(item.id)}
                   onMouseLeave={() => setHoveredNav(null)}
@@ -250,7 +251,7 @@ export default function SmartCropDashboard() {
                       transition={{ type: 'spring', stiffness: 400, damping: 30 }}
                     />
                   )}
-                </button>
+                </Link>
               );
             })}
           </div>
@@ -320,7 +321,6 @@ export default function SmartCropDashboard() {
             <button
               onMouseEnter={() => setHoveredAction('user')}
               onMouseLeave={() => setHoveredAction(null)}
-              onClick={() => router.push('/farmer-profile')}
               className={`h-11 rounded-full flex items-center justify-center bg-white/80 hover:bg-white border border-black/6 hover:border-black/15 transition-all duration-300 shadow-sm relative cursor-pointer group ${
                 hoveredAction === 'user' ? 'px-4' : 'w-11'
               }`}
@@ -386,12 +386,16 @@ export default function SmartCropDashboard() {
             transition={{ duration: 0.7, delay: 0.25, ease: [0.16, 1, 0.3, 1] }}
             className="flex flex-wrap justify-center items-center gap-4"
           >
-            <button className="whitespace-nowrap px-8 py-4 rounded-full bg-[#1B1E19] text-[#F7F8F4] font-medium flex items-center gap-2 hover:bg-black transition-colors shadow-lg shadow-black/10">
-              View Farm Health
-            </button>
-            <button className="whitespace-nowrap px-8 py-4 rounded-full bg-white/60 backdrop-blur-xl border border-black/10 font-medium text-[#1B1E19] flex items-center gap-2 hover:bg-white/80 transition-colors shadow-lg shadow-black/5">
-              Explore Advisory <ArrowRight size={18} />
-            </button>
+            <Link href="/crop-monitoring">
+              <button className="whitespace-nowrap px-8 py-4 rounded-full bg-[#1B1E19] text-[#F7F8F4] font-medium flex items-center gap-2 hover:bg-black transition-colors shadow-lg shadow-black/10">
+                View Farm Health
+              </button>
+            </Link>
+            <Link href="/crop-monitoring">
+              <button className="whitespace-nowrap px-8 py-4 rounded-full bg-white/60 backdrop-blur-xl border border-black/10 font-medium text-[#1B1E19] flex items-center gap-2 hover:bg-white/80 transition-colors shadow-lg shadow-black/5">
+                Explore Advisory <ArrowRight size={18} />
+              </button>
+            </Link>
             <button
               onClick={() => setIsSharingLocation(!isSharingLocation)}
               className={`whitespace-nowrap px-6 py-4 rounded-full font-medium flex items-center gap-2 transition-colors shadow-lg shadow-black/10 ${isSharingLocation ? 'bg-red-500 text-white hover:bg-red-600' : 'bg-white text-[#1B1E19] hover:bg-gray-50'}`}
@@ -819,9 +823,11 @@ export default function SmartCropDashboard() {
                     </div>
                   </div>
 
-                  <button className="w-full py-4 mt-2 rounded-full bg-[#D6F24B] text-[#1B1E19] font-bold flex justify-center items-center gap-2 hover:bg-[#cbf026] hover:scale-[1.02] active:scale-[0.99] transition-all duration-300 shadow-[0_0_28px_rgba(214,242,75,0.4),0_8px_20px_rgba(0,0,0,0.06)] border border-lime-300/60">
-                    View Insurance Options <ArrowRight size={18} />
-                  </button>
+                  <Link href="/insurance" className="block w-full">
+                    <button className="w-full py-4 mt-2 rounded-full bg-[#D6F24B] text-[#1B1E19] font-bold flex justify-center items-center gap-2 hover:bg-[#cbf026] hover:scale-[1.02] active:scale-[0.99] transition-all duration-300 shadow-[0_0_28px_rgba(214,242,75,0.4),0_8px_20px_rgba(0,0,0,0.06)] border border-lime-300/60">
+                      View Insurance Options <ArrowRight size={18} />
+                    </button>
+                  </Link>
                 </div>
               </div>
             </motion.div>
@@ -830,83 +836,89 @@ export default function SmartCropDashboard() {
           {/* Recommended Actions Row */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
 
-            <motion.div
-              whileHover={{ scale: 1.06, y: -10, transition: { type: 'spring', stiffness: 500, damping: 12, mass: 0.6 } }}
-              whileTap={{ scale: 0.9, transition: { type: 'spring', stiffness: 600, damping: 14 } }}
-              className="rounded-3xl p-6 flex items-center justify-between cursor-pointer transition-colors duration-300 group"
-              style={{
-                background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.78) 0%, rgba(238, 252, 218, 0.65) 100%)',
-                backdropFilter: 'blur(24px)',
-                WebkitBackdropFilter: 'blur(24px)',
-                border: '1px solid rgba(255, 255, 255, 0.85)',
-                boxShadow: '0 16px 36px -10px rgba(27, 30, 25, 0.06), 0 0 25px rgba(214, 242, 75, 0.25), inset 0 1px 2px rgba(255, 255, 255, 0.9)',
-              }}
-            >
-              <div className="flex items-center gap-4">
-                <div className="relative flex w-12 h-12 rounded-2xl bg-linear-to-br from-[#E4FC67] to-[#BEE627] p-px shadow-[0_8px_20px_-4px_rgba(214,242,75,0.7)] group-hover:scale-110 transition-transform duration-300 shrink-0">
-                  <div className="w-full h-full rounded-[14px] bg-linear-to-b from-white/70 via-[#F3FDE0]/80 to-[#E1F79A]/80 backdrop-blur-md flex items-center justify-center border border-white/80 shadow-inner">
-                    <Droplets size={20} className="text-[#1B1E19]" strokeWidth={2.2} />
+            <Link href="/crop-monitoring" className="block">
+              <motion.div
+                whileHover={{ scale: 1.06, y: -10, transition: { type: 'spring', stiffness: 500, damping: 12, mass: 0.6 } }}
+                whileTap={{ scale: 0.9, transition: { type: 'spring', stiffness: 600, damping: 14 } }}
+                className="rounded-3xl p-6 flex items-center justify-between cursor-pointer transition-colors duration-300 group"
+                style={{
+                  background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.78) 0%, rgba(238, 252, 218, 0.65) 100%)',
+                  backdropFilter: 'blur(24px)',
+                  WebkitBackdropFilter: 'blur(24px)',
+                  border: '1px solid rgba(255, 255, 255, 0.85)',
+                  boxShadow: '0 16px 36px -10px rgba(27, 30, 25, 0.06), 0 0 25px rgba(214, 242, 75, 0.25), inset 0 1px 2px rgba(255, 255, 255, 0.9)',
+                }}
+              >
+                <div className="flex items-center gap-4">
+                  <div className="relative flex w-12 h-12 rounded-2xl bg-linear-to-br from-[#E4FC67] to-[#BEE627] p-px shadow-[0_8px_20px_-4px_rgba(214,242,75,0.7)] group-hover:scale-110 transition-transform duration-300 shrink-0">
+                    <div className="w-full h-full rounded-[14px] bg-linear-to-b from-white/70 via-[#F3FDE0]/80 to-[#E1F79A]/80 backdrop-blur-md flex items-center justify-center border border-white/80 shadow-inner">
+                      <Droplets size={20} className="text-[#1B1E19]" strokeWidth={2.2} />
+                    </div>
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-[#1B1E19] text-[15px]">Switch irrigation</h3>
+                    <div className="text-[13px] text-[#6B6F63] mt-0.5">Update schedule based on soil</div>
                   </div>
                 </div>
-                <div>
-                  <h3 className="font-semibold text-[#1B1E19] text-[15px]">Switch irrigation</h3>
-                  <div className="text-[13px] text-[#6B6F63] mt-0.5">Update schedule based on soil</div>
-                </div>
-              </div>
-              <ChevronRight className="text-black/30 group-hover:text-black group-hover:translate-x-1 transition-all" />
-            </motion.div>
+                <ChevronRight className="text-black/30 group-hover:text-black group-hover:translate-x-1 transition-all" />
+              </motion.div>
+            </Link>
 
-            <motion.div
-              whileHover={{ scale: 1.06, y: -10, transition: { type: 'spring', stiffness: 500, damping: 12, mass: 0.6 } }}
-              whileTap={{ scale: 0.9, transition: { type: 'spring', stiffness: 600, damping: 14 } }}
-              className="rounded-3xl p-6 flex items-center justify-between cursor-pointer transition-colors duration-300 group"
-              style={{
-                background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.78) 0%, rgba(254, 236, 228, 0.65) 100%)',
-                backdropFilter: 'blur(24px)',
-                WebkitBackdropFilter: 'blur(24px)',
-                border: '1px solid rgba(255, 255, 255, 0.85)',
-                boxShadow: '0 16px 36px -10px rgba(27, 30, 25, 0.06), 0 0 25px rgba(228, 87, 46, 0.2), inset 0 1px 2px rgba(255, 255, 255, 0.9)',
-              }}
-            >
-              <div className="flex items-center gap-4">
-                <div className="relative flex w-12 h-12 rounded-full bg-linear-to-br from-[#FF7B7B] to-[#DC2626] p-0.5 shadow-[0_8px_20px_-4px_rgba(220,38,38,0.55)] group-hover:scale-110 transition-transform duration-300 shrink-0">
-                  <div className="w-full h-full rounded-full bg-linear-to-b from-white/80 via-[#FFEBEB]/85 to-[#FFCDCD]/85 backdrop-blur-md flex items-center justify-center border border-white/90 shadow-inner">
-                    <ShieldAlert size={20} className="text-red-600" strokeWidth={2.2} />
+            <Link href="/insurance" className="block">
+              <motion.div
+                whileHover={{ scale: 1.06, y: -10, transition: { type: 'spring', stiffness: 500, damping: 12, mass: 0.6 } }}
+                whileTap={{ scale: 0.9, transition: { type: 'spring', stiffness: 600, damping: 14 } }}
+                className="rounded-3xl p-6 flex items-center justify-between cursor-pointer transition-colors duration-300 group"
+                style={{
+                  background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.78) 0%, rgba(254, 236, 228, 0.65) 100%)',
+                  backdropFilter: 'blur(24px)',
+                  WebkitBackdropFilter: 'blur(24px)',
+                  border: '1px solid rgba(255, 255, 255, 0.85)',
+                  boxShadow: '0 16px 36px -10px rgba(27, 30, 25, 0.06), 0 0 25px rgba(228, 87, 46, 0.2), inset 0 1px 2px rgba(255, 255, 255, 0.9)',
+                }}
+              >
+                <div className="flex items-center gap-4">
+                  <div className="relative flex w-12 h-12 rounded-full bg-linear-to-br from-[#FF7B7B] to-[#DC2626] p-0.5 shadow-[0_8px_20px_-4px_rgba(220,38,38,0.55)] group-hover:scale-110 transition-transform duration-300 shrink-0">
+                    <div className="w-full h-full rounded-full bg-linear-to-b from-white/80 via-[#FFEBEB]/85 to-[#FFCDCD]/85 backdrop-blur-md flex items-center justify-center border border-white/90 shadow-inner">
+                      <ShieldAlert size={20} className="text-red-600" strokeWidth={2.2} />
+                    </div>
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-[#1B1E19] text-[15px]">Apply insurance</h3>
+                    <div className="text-[13px] text-[#6B6F63] mt-0.5">High risk threshold crossed</div>
                   </div>
                 </div>
-                <div>
-                  <h3 className="font-semibold text-[#1B1E19] text-[15px]">Apply insurance</h3>
-                  <div className="text-[13px] text-[#6B6F63] mt-0.5">High risk threshold crossed</div>
-                </div>
-              </div>
-              <ChevronRight className="text-black/30 group-hover:text-black group-hover:translate-x-1 transition-all" />
-            </motion.div>
+                <ChevronRight className="text-black/30 group-hover:text-black group-hover:translate-x-1 transition-all" />
+              </motion.div>
+            </Link>
 
-            <motion.div
-              whileHover={{ scale: 1.06, y: -10, transition: { type: 'spring', stiffness: 500, damping: 12, mass: 0.6 } }}
-              whileTap={{ scale: 0.9, transition: { type: 'spring', stiffness: 600, damping: 14 } }}
-              className="rounded-3xl p-6 flex items-center justify-between cursor-pointer transition-colors duration-300 group"
-              style={{
-                background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.78) 0%, rgba(232, 252, 238, 0.65) 100%)',
-                backdropFilter: 'blur(24px)',
-                WebkitBackdropFilter: 'blur(24px)',
-                border: '1px solid rgba(255, 255, 255, 0.85)',
-                boxShadow: '0 16px 36px -10px rgba(27, 30, 25, 0.06), 0 0 25px rgba(34, 197, 94, 0.2), inset 0 1px 2px rgba(255, 255, 255, 0.9)',
-              }}
-            >
-              <div className="flex items-center gap-4">
-                <div className="relative flex w-12 h-12 rounded-2xl bg-linear-to-br from-[#86EFAC] to-[#22C55E] p-px shadow-[0_8px_20px_-4px_rgba(34,197,94,0.55)] group-hover:scale-110 transition-transform duration-300 shrink-0">
-                  <div className="w-full h-full rounded-[14px] bg-linear-to-b from-white/70 via-[#ECFDF5]/80 to-[#DCFCE7]/80 backdrop-blur-md flex items-center justify-center border border-white/80 shadow-inner">
-                    <Leaf size={20} className="text-emerald-800" strokeWidth={2.2} />
+            <Link href="/alternative-crop" className="block">
+              <motion.div
+                whileHover={{ scale: 1.06, y: -10, transition: { type: 'spring', stiffness: 500, damping: 12, mass: 0.6 } }}
+                whileTap={{ scale: 0.9, transition: { type: 'spring', stiffness: 600, damping: 14 } }}
+                className="rounded-3xl p-6 flex items-center justify-between cursor-pointer transition-colors duration-300 group"
+                style={{
+                  background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.78) 0%, rgba(232, 252, 238, 0.65) 100%)',
+                  backdropFilter: 'blur(24px)',
+                  WebkitBackdropFilter: 'blur(24px)',
+                  border: '1px solid rgba(255, 255, 255, 0.85)',
+                  boxShadow: '0 16px 36px -10px rgba(27, 30, 25, 0.06), 0 0 25px rgba(34, 197, 94, 0.2), inset 0 1px 2px rgba(255, 255, 255, 0.9)',
+                }}
+              >
+                <div className="flex items-center gap-4">
+                  <div className="relative flex w-12 h-12 rounded-2xl bg-linear-to-br from-[#86EFAC] to-[#22C55E] p-px shadow-[0_8px_20px_-4px_rgba(34,197,94,0.55)] group-hover:scale-110 transition-transform duration-300 shrink-0">
+                    <div className="w-full h-full rounded-[14px] bg-linear-to-b from-white/70 via-[#ECFDF5]/80 to-[#DCFCE7]/80 backdrop-blur-md flex items-center justify-center border border-white/80 shadow-inner">
+                      <Leaf size={20} className="text-emerald-800" strokeWidth={2.2} />
+                    </div>
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-[#1B1E19] text-[15px]">Alternative crop</h3>
+                    <div className="text-[13px] text-[#6B6F63] mt-0.5">Groundnut (88% suitable)</div>
                   </div>
                 </div>
-                <div>
-                  <h3 className="font-semibold text-[#1B1E19] text-[15px]">Alternative crop</h3>
-                  <div className="text-[13px] text-[#6B6F63] mt-0.5">Groundnut (88% suitable)</div>
-                </div>
-              </div>
-              <ChevronRight className="text-black/30 group-hover:text-black group-hover:translate-x-1 transition-all" />
-            </motion.div>
+                <ChevronRight className="text-black/30 group-hover:text-black group-hover:translate-x-1 transition-all" />
+              </motion.div>
+            </Link>
 
           </div>
 

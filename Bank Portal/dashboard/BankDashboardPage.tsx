@@ -1,18 +1,121 @@
 'use client';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { Card, BANK_PAGE_CONTAINER_STYLE } from '../ui/BankComponents';
-import { mockBanks, mockFacilities } from '../facilities/data';
 
-const BANK = mockBanks[0];
-const counts = {
-  total: mockFacilities.filter(f => f.bankId === BANK.id).length,
-  published: mockFacilities.filter(f => f.bankId === BANK.id && f.status === 'Published').length,
-  draft: mockFacilities.filter(f => f.bankId === BANK.id && f.status === 'Draft').length,
-  underReview: mockFacilities.filter(f => f.bankId === BANK.id && f.status === 'Under Review').length,
+interface DashboardData {
+  bank: {
+    id: string;
+    bankName: string;
+    institutionType: string;
+    verificationStatus: string;
+    state: string | null;
+    district: string | null;
+  };
+  counts: { total: number; published: number; draft: number; underReview: number };
+  recentFacilities: Array<{
+    id: string;
+    facilityName: string;
+    facilityType: string;
+    status: string;
+    interestRate: string | null;
+    updatedAt: string;
+  }>;
+}
+
+// Verification badge config per DB verification_status (banks.verification_status)
+const VERIFICATION_BADGES: Record<string, { label: string; bg: string; color: string; border: string; dot: string }> = {
+  verified:     { label: '✓ VERIFIED BANK',     bg: '#ecfdf5', color: '#065f46', border: '#a7f3d0', dot: '#10b981' },
+  under_review: { label: '⏳ UNDER REVIEW',      bg: '#fffbeb', color: '#92400e', border: '#fde68a', dot: '#f59e0b' },
+  submitted:    { label: 'SUBMITTED FOR REVIEW', bg: '#eff6ff', color: '#1e40af', border: '#bfdbfe', dot: '#3b82f6' },
+  draft:        { label: 'DRAFT PROFILE',        bg: '#f8fafc', color: '#475569', border: '#e2e8f0', dot: '#94a3b8' },
+  rejected:     { label: '✗ REJECTED',           bg: '#fef2f2', color: '#991b1b', border: '#fecaca', dot: '#ef4444' },
+  suspended:    { label: 'SUSPENDED',            bg: '#fef2f2', color: '#991b1b', border: '#fecaca', dot: '#ef4444' },
 };
 
+// DB status -> display label + badge colors (8 statuses in financial_facilities)
+const STATUS_DISPLAY: Record<string, { label: string; bg: string; color: string; border: string }> = {
+  published:    { label: 'Published',    bg: '#dcfce7', color: '#166534', border: '#bbf7d0' },
+  draft:        { label: 'Draft',        bg: '#fef3c7', color: '#b45309', border: '#fde68a' },
+  submitted:    { label: 'Submitted',    bg: '#dbeafe', color: '#1e40af', border: '#bfdbfe' },
+  under_review: { label: 'Under Review', bg: '#f5f3ff', color: '#7c3aed', border: '#ddd6fe' },
+  approved:     { label: 'Approved',     bg: '#ecfdf5', color: '#065f46', border: '#a7f3d0' },
+  unpublished:  { label: 'Unpublished',  bg: '#f1f5f9', color: '#475569', border: '#e2e8f0' },
+  expired:      { label: 'Expired',      bg: '#f1f5f9', color: '#475569', border: '#e2e8f0' },
+  suspended:    { label: 'Suspended',    bg: '#fef2f2', color: '#991b1b', border: '#fecaca' },
+};
+
+const NEUTRAL_STATUS = { label: '', bg: '#f1f5f9', color: '#475569', border: '#e2e8f0' };
+
+const fmtDate = (iso: string) =>
+  new Date(iso).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+
 export default function BankDashboardPage() {
+  const searchParams = useSearchParams();
+  const bankId = searchParams?.get('bankId') ?? '';
+  const [data, setData] = useState<DashboardData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (!bankId) {
+      setError('No bank selected. Open this page with your bank id, e.g. /bank-portal/dashboard?bankId=bank_xxx');
+      setLoading(false);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(`/api/banks/${encodeURIComponent(bankId)}/dashboard`);
+        const json = await res.json().catch(() => ({}) as { error?: string });
+        if (cancelled) return;
+        if (res.ok) {
+          setData(json as DashboardData);
+        } else {
+          setError(json.error || `Failed to load dashboard (HTTP ${res.status}).`);
+        }
+      } catch {
+        if (!cancelled) setError('Network error — could not reach the server.');
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [bankId]);
+
+  // ---- Loading state ----
+  if (loading) {
+    return (
+      <div style={BANK_PAGE_CONTAINER_STYLE}>
+        <div style={{ maxWidth: '920px', margin: '0 auto', textAlign: 'center', padding: '5rem 1rem' }}>
+          <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>🏦</div>
+          <p style={{ color: '#475569', fontWeight: 700 }}>Loading dashboard…</p>
+        </div>
+      </div>
+    );
+  }
+
+  // ---- Error state ----
+  if (error || !data) {
+    return (
+      <div style={BANK_PAGE_CONTAINER_STYLE}>
+        <div style={{ maxWidth: '640px', margin: '0 auto', paddingTop: '3rem' }}>
+          <Card>
+            <div style={{ textAlign: 'center', padding: '2rem 1rem' }}>
+              <div style={{ fontSize: '2.2rem', marginBottom: '0.75rem' }}>⚠️</div>
+              <h2 style={{ color: '#991b1b', margin: '0 0 0.5rem' }}>Could not load dashboard</h2>
+              <p style={{ color: '#475569', margin: 0 }}>{error}</p>
+            </div>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  const vBadge = VERIFICATION_BADGES[data.bank.verificationStatus] ?? VERIFICATION_BADGES.draft;
+  const counts = data.counts;
+
   return (
     <div style={BANK_PAGE_CONTAINER_STYLE}>
       <style>{`
@@ -64,7 +167,7 @@ export default function BankDashboardPage() {
             Bank Dashboard
           </h1>
           <p style={{ color: '#475569', fontSize: '1rem', margin: 0 }}>
-            Welcome back, <strong>{BANK.name}</strong>
+            Welcome back, <strong>{data.bank.bankName}</strong>
           </p>
         </div>
 
@@ -76,15 +179,15 @@ export default function BankDashboardPage() {
                 🏦
               </div>
               <div>
-                <h2 style={{ margin: 0, color: '#0f172a', fontSize: '1.3rem', fontWeight: 800 }}>{BANK.name}</h2>
+                <h2 style={{ margin: 0, color: '#0f172a', fontSize: '1.3rem', fontWeight: 800 }}>{data.bank.bankName}</h2>
                 <p style={{ margin: '0.2rem 0 0', color: '#64748b', fontSize: '0.9rem', fontWeight: 500 }}>
-                  {BANK.type} · {BANK.state}
+                  {data.bank.institutionType}{data.bank.state ? ` · ${data.bank.state}` : ''}
                 </p>
               </div>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#ecfdf5', border: '1px solid #a7f3d0', padding: '0.45rem 1.1rem', borderRadius: '24px', boxShadow: '0 2px 6px rgba(16,185,129,0.1)' }}>
-              <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981', display: 'inline-block' }}></span>
-              <span style={{ color: '#065f46', fontWeight: 800, fontSize: '0.85rem', letterSpacing: '0.02em' }}>✓ VERIFIED BANK</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: vBadge.bg, border: `1px solid ${vBadge.border}`, padding: '0.45rem 1.1rem', borderRadius: '24px', boxShadow: '0 2px 6px rgba(16,185,129,0.1)' }}>
+              <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: vBadge.dot, display: 'inline-block' }}></span>
+              <span style={{ color: vBadge.color, fontWeight: 800, fontSize: '0.85rem', letterSpacing: '0.02em' }}>{vBadge.label}</span>
             </div>
           </div>
         </Card>
@@ -125,7 +228,7 @@ export default function BankDashboardPage() {
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
             {[
-              { href: '/bank-portal/facilities/add', label: '+ Add Facility', icon: '📋', primary: true },
+              { href: `/bank-portal/facilities/add?bankId=${bankId}`, label: '+ Add Facility', icon: '📋', primary: true },
               { href: '/bank-portal/facilities/manage', label: 'Manage Facilities', icon: '⚙️', primary: false },
               { href: '/bank-portal/register', label: 'Edit Bank Profile', icon: '🏦', primary: false },
               { href: '/financial-support/list', label: 'Preview Farmer View', icon: '👁️', primary: false },
@@ -163,46 +266,55 @@ export default function BankDashboardPage() {
         <Card>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
             <span style={{ fontSize: '1.1rem' }}>📄</span>
-            <h3 style={{ color: '#1e4078', fontWeight: 800, margin: 0, fontSize: '1rem', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+            <h3 style={{ color: '#1e40af', fontWeight: 800, margin: 0, fontSize: '1rem', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
               Recent Facilities
             </h3>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-            {mockFacilities.filter(f => f.bankId === BANK.id).map(f => (
-              <div
-                key={f.id}
-                className="recent-facility-row"
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  borderBottom: '1px solid #edf2f7',
-                  flexWrap: 'wrap',
-                  gap: '0.75rem',
-                }}
-              >
-                <div>
-                  <div style={{ fontWeight: 800, color: '#0f172a', fontSize: '0.98rem' }}>{f.facilityName}</div>
-                  <div style={{ color: '#64748b', fontSize: '0.84rem', marginTop: '0.15rem' }}>
-                    {f.facilityType} · {f.interestRate} · Updated {f.lastUpdated}
-                  </div>
-                </div>
-                <span
-                  style={{
-                    padding: '0.3rem 0.85rem',
-                    borderRadius: '20px',
-                    fontSize: '0.75rem',
-                    fontWeight: 700,
-                    boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-                    background: f.status === 'Published' ? '#dcfce7' : f.status === 'Draft' ? '#fef3c7' : '#f5f3ff',
-                    color: f.status === 'Published' ? '#166534' : f.status === 'Draft' ? '#b45309' : '#7c3aed',
-                    border: `1px solid ${f.status === 'Published' ? '#bbf7d0' : f.status === 'Draft' ? '#fde68a' : '#ddd6fe'}`,
-                  }}
-                >
-                  {f.status}
-                </span>
+            {data.recentFacilities.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '2rem 1rem', color: '#64748b', fontSize: '0.95rem' }}>
+                No facilities yet — click "+ Add Facility" to create your first listing.
               </div>
-            ))}
+            ) : (
+              data.recentFacilities.map(f => {
+                const sd = STATUS_DISPLAY[f.status] ?? { ...NEUTRAL_STATUS, label: f.status };
+                return (
+                  <div
+                    key={f.id}
+                    className="recent-facility-row"
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      borderBottom: '1px solid #edf2f7',
+                      flexWrap: 'wrap',
+                      gap: '0.75rem',
+                    }}
+                  >
+                    <div>
+                      <div style={{ fontWeight: 800, color: '#0f172a', fontSize: '0.98rem' }}>{f.facilityName}</div>
+                      <div style={{ color: '#64748b', fontSize: '0.84rem', marginTop: '0.15rem' }}>
+                        {f.facilityType} · {f.interestRate || '—'} · Updated {fmtDate(f.updatedAt)}
+                      </div>
+                    </div>
+                    <span
+                      style={{
+                        padding: '0.3rem 0.85rem',
+                        borderRadius: '20px',
+                        fontSize: '0.75rem',
+                        fontWeight: 700,
+                        boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+                        background: sd.bg,
+                        color: sd.color,
+                        border: `1px solid ${sd.border}`,
+                      }}
+                    >
+                      {sd.label}
+                    </span>
+                  </div>
+                );
+              })
+            )}
           </div>
         </Card>
       </div>

@@ -11,30 +11,66 @@ const INSTITUTION_TYPES = [
   'Other approved financial institution',
 ];
 
+const EMPTY_FORM = {
+  bankName: '',
+  institutionType: '',
+  website: '',
+  email: '',
+  phone: '',
+  hq: '',
+  state: '',
+  district: '',
+  country: 'India',
+  description: '',
+};
+
 export default function BankRegisterPage() {
-  const [form, setForm] = useState({
-    bankName: '',
-    institutionType: '',
-    website: '',
-    email: '',
-    phone: '',
-    hq: '',
-    state: '',
-    district: '',
-    country: 'India',
-    description: '',
-  });
+  const [form, setForm] = useState(EMPTY_FORM);
+  const [submitting, setSubmitting] = useState(false);
+  const [apiError, setApiError] = useState('');
+  const [toastMsg, setToastMsg] = useState('');
+  const [toastType, setToastType] = useState<'success' | 'error'>('success');
   const [toast, setToast] = useState(false);
   const [done, setDone] = useState(false);
 
   const ch = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
     setForm(f => ({ ...f, [e.target.name]: e.target.value }));
 
-  const sub = (e: React.FormEvent) => {
-    e.preventDefault();
-    setDone(true);
+  const showToast = (message: string, type: 'success' | 'error' = 'success') => {
+    setToastMsg(message);
+    setToastType(type);
     setToast(true);
     setTimeout(() => setToast(false), 4000);
+  };
+
+  const sub = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (submitting) return;
+    setApiError('');
+    setSubmitting(true);
+    try {
+      const res = await fetch('/api/banks/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      });
+      const data = await res.json().catch(() => ({}) as { message?: string; error?: string });
+
+      if (res.ok) {
+        setDone(true);
+        showToast(data.message || 'Registration submitted successfully! Under review.', 'success');
+      } else {
+        const msg = data.error || 'Registration failed. Please try again.';
+        setApiError(msg);
+        showToast(msg, 'error');
+      }
+    } catch {
+      const msg = 'Network error — could not reach the server. Please check your connection and try again.';
+      setApiError(msg);
+      showToast(msg, 'error');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -86,7 +122,7 @@ export default function BankRegisterPage() {
                 </p>
               </div>
               <button
-                onClick={() => setDone(false)}
+                onClick={() => { setDone(false); setForm(EMPTY_FORM); setApiError(''); }}
                 className="bank-submit-btn"
                 style={BANK_PRIMARY_BTN_STYLE}
               >
@@ -164,24 +200,34 @@ export default function BankRegisterPage() {
                 <span>After submission, your bank profile is reviewed by Smart Crop administrators. You will be notified once verified.</span>
               </div>
 
+              {apiError && (
+                <div style={{ background: '#fef2f2', border: '1.5px solid #fecaca', borderRadius: '10px', padding: '0.9rem 1.1rem', marginBottom: '1.25rem', fontSize: '0.9rem', color: '#991b1b', display: 'flex', gap: '0.6rem', alignItems: 'flex-start' }}>
+                  <span style={{ fontSize: '1rem', flexShrink: 0 }}>⚠️</span>
+                  <span style={{ fontWeight: 600 }}>{apiError}</span>
+                </div>
+              )}
+
               <button
                 type="submit"
+                disabled={submitting}
                 className="bank-submit-btn"
                 style={{
                   ...BANK_PRIMARY_BTN_STYLE,
                   width: '100%',
                   padding: '1rem',
                   fontSize: '1.05rem',
+                  opacity: submitting ? 0.7 : 1,
+                  cursor: submitting ? 'not-allowed' : 'pointer',
                 }}
               >
-                Submit Bank Registration
+                {submitting ? 'Submitting Registration…' : 'Submit Bank Registration'}
               </button>
             </form>
           </Card>
         )}
       </div>
 
-      {toast && <Toast message="Registration submitted successfully! Under review." />}
+      {toast && <Toast message={toastMsg} type={toastType} />}
     </div>
   );
 }

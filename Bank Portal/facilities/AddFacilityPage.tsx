@@ -1,6 +1,6 @@
 'use client';
 import React, { useState, useEffect } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { Card, Toast, BANK_INPUT_STYLE, BANK_LABEL_STYLE, BANK_PAGE_CONTAINER_STYLE, BANK_PRIMARY_BTN_STYLE } from '../ui/BankComponents';
 import { mockFacilities } from './data';
 
@@ -41,8 +41,14 @@ const FARMER_TYPES = [
 
 export default function AddFacilityPage() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const editId = searchParams?.get('id');
+  const bankId = searchParams?.get('bankId') ?? '';
   const [toast, setToast] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [apiError, setApiError] = useState('');
+  const [toastMsg, setToastMsg] = useState('');
+  const [toastType, setToastType] = useState<'success' | 'error'>('success');
   const [form, setForm] = useState({
     facilityName: '',
     facilityType: '',
@@ -107,11 +113,58 @@ export default function AddFacilityPage() {
   const toggleArr = (key: 'farmerType' | 'cropTypes' | 'documents', val: string) =>
     setForm(f => ({ ...f, [key]: f[key].includes(val) ? f[key].filter(x => x !== val) : [...f[key], val] }));
 
-  const sub = (e: React.FormEvent) => {
-    e.preventDefault();
+  const showToast = (message: string, type: 'success' | 'error' = 'success') => {
+    setToastMsg(message);
+    setToastType(type);
     setToast(true);
     setTimeout(() => setToast(false), 4000);
   };
+
+  const submitToApi = async (forcedStatus?: string) => {
+    if (submitting) return;
+    if (editId) {
+      setApiError('Editing is not yet connected to the database — only new facility creation is wired at this stage.');
+      return;
+    }
+    if (!bankId) {
+      setApiError('No bank selected. Open this page with your bank id, e.g. /bank-portal/facilities/add?bankId=test_bank_001');
+      return;
+    }
+    setApiError('');
+    setSubmitting(true);
+    try {
+      // Map form vocabulary to DB vocabulary: 'Published' submit enters the review queue as 'submitted'.
+      const status = forcedStatus ?? (form.status.toLowerCase() === 'published' ? 'submitted' : 'draft');
+      const res = await fetch('/api/facilities/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...form, bankId, status }),
+      });
+      const data = await res.json().catch(() => ({}) as { message?: string; error?: string });
+
+      if (res.ok) {
+        showToast(data.message || 'Facility saved successfully!', 'success');
+        setTimeout(() => router.push(`/bank-portal/facilities/manage?bankId=${bankId}`), 1500);
+      } else {
+        const msg = data.error || 'Facility creation failed. Please try again.';
+        setApiError(msg);
+        showToast(msg, 'error');
+      }
+    } catch {
+      const msg = 'Network error — could not reach the server. Please check your connection and try again.';
+      setApiError(msg);
+      showToast(msg, 'error');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const sub = (e: React.FormEvent) => {
+    e.preventDefault();
+    submitToApi();
+  };
+
+  const saveDraft = () => submitToApi('draft');
 
   const Section = ({ title, icon, children }: { title: string; icon: string; children: React.ReactNode }) => (
     <div style={{ marginBottom: '2.25rem' }}>
@@ -393,9 +446,17 @@ export default function AddFacilityPage() {
               </p>
             </Section>
 
+            {apiError && (
+              <div style={{ background: '#fef2f2', border: '1.5px solid #fecaca', borderRadius: '10px', padding: '0.9rem 1.1rem', marginBottom: '1.25rem', fontSize: '0.9rem', color: '#991b1b', display: 'flex', gap: '0.6rem', alignItems: 'flex-start' }}>
+                <span style={{ fontSize: '1rem', flexShrink: 0 }}>⚠️</span>
+                <span style={{ fontWeight: 600 }}>{apiError}</span>
+              </div>
+            )}
+
             <div style={{ display: 'flex', gap: '1rem', marginTop: '2rem', flexWrap: 'wrap' }}>
               <button
                 type="submit"
+                disabled={submitting}
                 className="bank-submit-btn"
                 style={{
                   ...BANK_PRIMARY_BTN_STYLE,
@@ -403,12 +464,16 @@ export default function AddFacilityPage() {
                   minWidth: '200px',
                   padding: '1rem',
                   fontSize: '1rem',
+                  opacity: submitting ? 0.7 : 1,
+                  cursor: submitting ? 'not-allowed' : 'pointer',
                 }}
               >
-                💾 {editId ? 'Update Facility' : 'Save & Publish Facility'}
+                💾 {submitting ? 'Saving…' : editId ? 'Update Facility' : 'Save & Publish Facility'}
               </button>
               <button
                 type="button"
+                onClick={saveDraft}
+                disabled={submitting}
                 className="bank-draft-btn"
                 style={{
                   padding: '1rem 1.75rem',
@@ -430,7 +495,7 @@ export default function AddFacilityPage() {
         </Card>
       </div>
 
-      {toast && <Toast message="Facility saved successfully!" />}
+      {toast && <Toast message={toastMsg} type={toastType} />}
     </div>
   );
 }

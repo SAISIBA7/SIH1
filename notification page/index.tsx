@@ -1,8 +1,6 @@
 'use client';
 
-import React from 'react';
-import Image from 'next/image';
-import bgImage from './img/1(1).png';
+import React, { useEffect } from 'react';
 import { NotificationHeader } from './components/NotificationHeader';
 import { PrioritySummary } from './components/PrioritySummary';
 import CategoryFilter from '../Government equipment schemes/components/CategoryFilter';
@@ -13,7 +11,12 @@ import VoiceButton from '../Government equipment schemes/components/VoiceButton'
 import { NotificationCategory, NotificationItem } from './types';
 
 export default function NotificationsHub() {
-  const { notifications, activeFilter, unreadCount, setFilter } = useNotificationStore();
+  const { notifications, activeFilter, unreadCount, setFilter, fetchNotifications, loading } = useNotificationStore();
+
+  // Fetch from RDS on mount
+  useEffect(() => {
+    fetchNotifications();
+  }, []);
 
   const filtered = activeFilter === 'All' 
     ? notifications 
@@ -58,50 +61,77 @@ export default function NotificationsHub() {
   }, {} as Record<NotificationCategory, number>);
 
   return (
-    <>
-      {/* Fixed background image with blur */}
-      <div className="fixed inset-0 z-0 overflow-hidden">
-        <Image
-          src={bgImage}
-          alt=""
-          fill
-          priority
-          className="object-cover object-center opacity-30 blur-[12px] scale-105"
-        />
-      </div>
-      {/* Content shell */}
-      <div className="relative z-10 flex min-h-screen items-center justify-center p-6">
-        <div className="max-w-4xl w-full bg-white/90 rounded-[28px] border border-white/80 backdrop-blur-xl shadow-[0_8px_24px_rgba(0,0,0,0.06)] p-6 md:p-8">
+    <div className="relative min-h-screen font-sans overflow-x-hidden text-slate-900">
+      
+      {/* Responsive Background Images: 16:9 Laptop / 9:16 Phone */}
+      <div 
+        className="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat bg-fixed transition-all duration-700 bg-[url('/notification/bg-phone.png')] md:bg-[url('/notification/bg-laptop.png')]"
+      />
+
+      {/* Frosted Green Overlay */}
+      <div className="fixed inset-0 z-0 bg-gradient-to-b from-white/40 via-emerald-950/8 to-emerald-900/20 backdrop-blur-[2px] pointer-events-none" />
+
+      {/* Content */}
+      <div className="relative z-10 flex min-h-screen items-start justify-center p-4 md:p-8">
+        <div className="max-w-5xl w-full bg-white/45 backdrop-blur-2xl rounded-[32px] border border-white/80 shadow-[0_20px_60px_-15px_rgba(16,185,129,0.15)] p-6 md:p-8 mt-4 md:mt-8">
           <div className="flex flex-col md:flex-row gap-6">
-            {/* Left rail – filters */}
+            
+            {/* Left Rail – Filters (Desktop) */}
             <aside className="hidden md:block w-64 shrink-0">
-              <div className="sticky top-8">
-                <h2 className="text-xl font-bold mb-6 text-[#1A1A1A]">Filters</h2>
-                <CategoryFilter
-                  categories={categories}
-                  activeCategory={activeFilter}
-                  categoryCounts={categoryCounts}
-                  onSelectCategory={setFilter}
-                  variant="sidebar"
-                />
+              <div className="sticky top-8 space-y-6">
+                <div className="bg-white/60 backdrop-blur-xl rounded-2xl border border-white/90 shadow-sm p-4">
+                  <h2 className="text-lg font-extrabold text-slate-900 mb-4 tracking-tight">Filters</h2>
+                  <CategoryFilter
+                    categories={categories}
+                    activeCategory={activeFilter}
+                    categoryCounts={categoryCounts}
+                    onSelectCategory={setFilter}
+                    variant="sidebar"
+                  />
+                </div>
+
+                {/* API Status Badge */}
+                <div className="bg-white/60 backdrop-blur-xl rounded-2xl border border-white/90 shadow-sm p-3 text-center">
+                  <div className="flex items-center justify-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span className="text-xs font-bold text-emerald-900">Connected to AWS RDS</span>
+                  </div>
+                  <p className="text-[10px] text-slate-600 mt-1">Real-time notification feed</p>
+                </div>
               </div>
             </aside>
 
-            {/* Right/main column */}
+            {/* Main Column */}
             <main className="flex-1">
-              <NotificationHeader unreadCount={unreadCount()} />
-              <div className="flex justify-end mb-4">
-                <VoiceButton textToRead="You have new critical alerts and updates." />
+              {/* Header with updated glassmorphic styling */}
+              <div className="bg-white/60 backdrop-blur-xl rounded-2xl border border-white/90 shadow-sm p-4 mb-4">
+                <NotificationHeader unreadCount={unreadCount()} />
               </div>
 
-              <PrioritySummary
-                criticalAlert={criticalAlert}
-                unreadCount={unreadCount()}
-                actionNeededCount={actionNeededCount}
-              />
+              {/* Voice + Loading */}
+              <div className="flex items-center justify-between mb-4">
+                {loading && (
+                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/15 border border-emerald-500/30">
+                    <div className="w-3 h-3 border-2 border-emerald-300 border-t-emerald-700 rounded-full animate-spin"></div>
+                    <span className="text-xs font-bold text-emerald-900">Fetching from RDS...</span>
+                  </div>
+                )}
+                <div className="ml-auto">
+                  <VoiceButton textToRead="You have new critical alerts and updates." />
+                </div>
+              </div>
 
-              {/* Mobile filters */}
-              <div className="md:hidden mb-6">
+              {/* Priority Summary */}
+              <div className="bg-white/60 backdrop-blur-xl rounded-2xl border border-white/90 shadow-sm p-4 mb-4">
+                <PrioritySummary
+                  criticalAlert={criticalAlert}
+                  unreadCount={unreadCount()}
+                  actionNeededCount={actionNeededCount}
+                />
+              </div>
+
+              {/* Mobile Filters */}
+              <div className="md:hidden mb-6 bg-white/60 backdrop-blur-xl rounded-2xl border border-white/90 shadow-sm p-4">
                 <CategoryFilter
                   categories={categories}
                   activeCategory={activeFilter}
@@ -111,21 +141,24 @@ export default function NotificationsHub() {
                 />
               </div>
 
-              <div className="flex flex-col gap-8 pb-24">
+              {/* Timeline Groups */}
+              <div className="flex flex-col gap-6 pb-24">
                 {Object.entries(groups).map(([label, items]) => {
                   if (items.length === 0) return null;
                   return (
-                    <TimelineGroup key={label} label={label}>
-                      {items.map((notif) => (
-                        <NotificationCard key={notif.id} notification={notif} />
-                      ))}
-                    </TimelineGroup>
+                    <div key={label} className="bg-white/50 backdrop-blur-xl rounded-2xl border border-white/80 shadow-sm p-4">
+                      <TimelineGroup label={label}>
+                        {items.map((notif) => (
+                          <NotificationCard key={notif.id} notification={notif} />
+                        ))}
+                      </TimelineGroup>
+                    </div>
                   );
                 })}
 
                 {filtered.length === 0 && (
-                  <div className="text-center py-12 text-gray-500">
-                    <p>No notifications found for this category.</p>
+                  <div className="text-center py-12 bg-white/50 backdrop-blur-xl rounded-2xl border border-white/80">
+                    <p className="text-slate-600 font-semibold">No notifications found for this category.</p>
                   </div>
                 )}
               </div>
@@ -133,6 +166,6 @@ export default function NotificationsHub() {
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 }

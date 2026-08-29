@@ -1,19 +1,62 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { mockFacilities } from '../data';
 import { SearchBar, FilterPanel } from '../ui/FarmerComponents';
 
-const ALL_CROPS = Array.from(new Set(mockFacilities.flatMap(f => f.cropTypes)));
-const ALL_TYPES = Array.from(new Set(mockFacilities.map(f => f.facilityType)));
-const PUBLISHED = mockFacilities.filter(f => f.status === 'Published');
+interface FarmerFacility {
+  id: string;
+  facilityName: string;
+  facilityType: string;
+  shortDescription: string | null;
+  bankName: string;
+  bankVerified: boolean;
+  interestRate: string | null;
+  tenure: string | null;
+  minimumAmount: number | null;
+  maximumAmount: number | null;
+  cropTypes: string[];
+}
+
+const fmtINR = (v: number | null) =>
+  v === null
+    ? '—'
+    : new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(v);
 
 export default function FinancialSupportListPage() {
+  // Real data: published facilities from MySQL (fetched once, filtered client-side)
+  const [facilities, setFacilities] = useState<FarmerFacility[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [search, setSearch] = useState('');
   const [crop, setCrop] = useState('All');
   const [type, setType] = useState('All');
 
-  const filtered = PUBLISHED.filter(f => {
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch('/api/facilities');
+        const json = await res.json().catch(() => ({}) as { error?: string });
+        if (cancelled) return;
+        if (res.ok) {
+          setFacilities(json.facilities);
+        } else {
+          setError(json.error || `Failed to load facilities (HTTP ${res.status}).`);
+        }
+      } catch {
+        if (!cancelled) setError('Network error — could not reach the server.');
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  // Filter options derive from the fetched published facilities
+  const allCrops = useMemo(() => Array.from(new Set(facilities.flatMap(f => f.cropTypes))), [facilities]);
+  const allTypes = useMemo(() => Array.from(new Set(facilities.map(f => f.facilityType))), [facilities]);
+
+  const filtered = facilities.filter(f => {
     const q = search.toLowerCase();
     const matchSearch =
       !q ||
@@ -123,7 +166,7 @@ export default function FinancialSupportListPage() {
           </div>
 
           {/* Filters */}
-          <FilterPanel crops={ALL_CROPS} selectedCrop={crop} onCrop={setCrop} types={ALL_TYPES} selectedType={type} onType={setType} />
+          <FilterPanel crops={allCrops} selectedCrop={crop} onCrop={setCrop} types={allTypes} selectedType={type} onType={setType} />
         </div>
 
         {/* Results count indicator */}
@@ -133,8 +176,59 @@ export default function FinancialSupportListPage() {
           </p>
         </div>
 
-        {/* Floating Clean White Glass Cards Grid (Opacity: 0.22, Blur: 14px) */}
-        {filtered.length === 0 ? (
+        {loading ? (
+          <div
+            style={{
+              background: 'rgba(255, 255, 255, 0.3)',
+              backdropFilter: 'blur(14px)',
+              WebkitBackdropFilter: 'blur(14px)',
+              border: '1px solid rgba(255, 255, 255, 0.55)',
+              borderRadius: '14px',
+              padding: '3rem 2rem',
+              textAlign: 'center',
+              boxShadow: '0 8px 24px rgba(0,0,0,0.05)',
+            }}
+          >
+            <div style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>🏦</div>
+            <p style={{ color: '#0b1a0e', fontSize: '1rem', fontWeight: 700, margin: 0 }}>Loading facilities…</p>
+          </div>
+        ) : error ? (
+          <div
+            style={{
+              background: 'rgba(255, 255, 255, 0.3)',
+              backdropFilter: 'blur(14px)',
+              WebkitBackdropFilter: 'blur(14px)',
+              border: '1px solid rgba(255, 255, 255, 0.55)',
+              borderRadius: '14px',
+              padding: '3rem 2rem',
+              textAlign: 'center',
+              boxShadow: '0 8px 24px rgba(0,0,0,0.05)',
+            }}
+          >
+            <div style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>⚠️</div>
+            <h3 style={{ color: '#991b1b', fontSize: '1.2rem', fontWeight: 800, margin: '0 0 0.5rem' }}>Could not load facilities</h3>
+            <p style={{ color: '#475569', fontWeight: 500, margin: 0 }}>{error}</p>
+          </div>
+        ) : facilities.length === 0 ? (
+          /* Fetched list is empty — no published facilities exist at all */
+          <div
+            style={{
+              background: 'rgba(255, 255, 255, 0.3)',
+              backdropFilter: 'blur(14px)',
+              WebkitBackdropFilter: 'blur(14px)',
+              border: '1px solid rgba(255, 255, 255, 0.55)',
+              borderRadius: '14px',
+              padding: '3rem 2rem',
+              textAlign: 'center',
+              boxShadow: '0 8px 24px rgba(0,0,0,0.05)',
+            }}
+          >
+            <div style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>🌱</div>
+            <h3 style={{ color: '#0b1a0e', fontSize: '1.2rem', fontWeight: 800, margin: '0 0 0.5rem' }}>No published facilities yet</h3>
+            <p style={{ color: '#475569', fontWeight: 500, margin: 0 }}>New financial facilities from partner banks will appear here once published. Please check back soon.</p>
+          </div>
+        ) : filtered.length === 0 ? (
+          /* Facilities exist, but the current search/filters exclude all of them */
           <div
             style={{
               background: 'rgba(255, 255, 255, 0.3)',
@@ -208,16 +302,18 @@ export default function FinancialSupportListPage() {
                   <p style={{ color: '#166534', fontSize: '0.88rem', fontWeight: 700, margin: '0 0 0.65rem' }}>
                     🏦 {f.bankName}
                   </p>
-                  <p style={{ color: '#334155', fontSize: '0.86rem', margin: '0 0 1rem', lineHeight: 1.5 }}>
-                    {f.shortDescription}
-                  </p>
+                  {f.shortDescription && (
+                    <p style={{ color: '#334155', fontSize: '0.86rem', margin: '0 0 1rem', lineHeight: 1.5 }}>
+                      {f.shortDescription}
+                    </p>
+                  )}
 
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', marginBottom: '1rem' }}>
                     {[
-                      { label: 'Interest Rate', value: f.interestRate, highlight: true },
-                      { label: 'Tenure', value: f.tenure, highlight: false },
-                      { label: 'Min Amount', value: f.minAmount, highlight: false },
-                      { label: 'Max Amount', value: f.maxAmount, highlight: false },
+                      { label: 'Interest Rate', value: f.interestRate || '—', highlight: true },
+                      { label: 'Tenure', value: f.tenure || '—', highlight: false },
+                      { label: 'Min Amount', value: fmtINR(f.minimumAmount), highlight: false },
+                      { label: 'Max Amount', value: fmtINR(f.maximumAmount), highlight: false },
                     ].map(item => (
                       <div
                         key={item.label}
@@ -280,4 +376,3 @@ export default function FinancialSupportListPage() {
     </section>
   );
 }
-
