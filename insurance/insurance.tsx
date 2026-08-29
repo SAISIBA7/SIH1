@@ -7,6 +7,7 @@ import { RegistrationStepper } from "./components/RegistrationStepper";
 import { BankSchemeList } from "./components/BankSchemeList";
 import { SchemeDetails } from "./components/SchemeDetails";
 import { mockFarmer, mockRisk, initialDocuments, mockApplication, mockBankSchemes } from "./data/mockInsurance";
+import { DocumentChecklist } from "./components/DocumentChecklist";
 import { FarmerProfile, InsuranceState, DocumentItem, BankScheme } from "./types/insurance";
 
 /**
@@ -21,10 +22,58 @@ export default function InsurancePage() {
   const [status, setStatus] = useState<InsuranceState>("NOT_REGISTERED");
   const [farmer, setFarmer] = useState<FarmerProfile>(mockFarmer);
   const [documents, setDocuments] = useState<DocumentItem[]>(initialDocuments);
-  const [activeView, setActiveView] = useState<"dashboard" | "stepper">("dashboard");
+  const [activeView, setActiveView] = useState<"dashboard" | "stepper" | "schemes" | "schemeDetails">("dashboard");
+  const [selectedScheme, setSelectedScheme] = useState<BankScheme | null>(null);
+  const [schemes, setSchemes] = useState<BankScheme[]>(mockBankSchemes);
   const [isEditingParcel, setIsEditingParcel] = useState(false);
   const [showRulesModal, setShowRulesModal] = useState(false);
   const [showLossReported, setShowLossReported] = useState(false);
+
+  React.useEffect(() => {
+    async function loadData() {
+      try {
+        const [farmerRes, schemesRes] = await Promise.all([
+          fetch('/api/farmer/FARMER-001'),
+          fetch('/api/insurance/schemes')
+        ]);
+        
+        const f = await farmerRes.json();
+        const s = await schemesRes.json();
+        
+        if (f && !f.error) {
+          setFarmer(prev => ({
+            ...prev,
+            name: f.name || prev.name,
+            mobile: f.phone || f.mobile || prev.mobile,
+            village: f.village || prev.village,
+            district: f.district || prev.district,
+            state: f.state || prev.state,
+          }));
+          if (f.insurance && f.insurance.length > 0) {
+            setStatus(f.insurance[0].status === 'Active' ? 'ACTIVE' : (f.insurance[0].status === 'Pending' ? 'APPLICATION_PENDING' : 'NOT_REGISTERED'));
+          }
+        }
+        
+        if (s && !s.error && Array.isArray(s) && s.length > 0) {
+          setSchemes(s.map((scheme: any) => ({
+            id: scheme.schemeId,
+            bankId: scheme.bank?.id || "bank-1",
+            bankName: scheme.bank?.bankName || "Unknown Bank",
+            schemeName: scheme.schemeName,
+            subsidy: scheme.coverage ? `₹${Number(scheme.coverage).toLocaleString('en-IN')}` : "Up to ₹1,00,000",
+            premium: scheme.premium ? `₹${Number(scheme.premium).toLocaleString('en-IN')}/season` : "₹500/season",
+            cropsCovered: ["Paddy", "Wheat"],
+            eligibilitySummary: ["Covers localized calamities", "Post-harvest losses included"],
+            requiredDocuments: ["Aadhaar", "Land Record", "Bank Passbook"],
+            availabilityStatus: "available"
+          })));
+        }
+      } catch (e) {
+        console.warn('Could not fetch insurance data:', e);
+      }
+    }
+    loadData();
+  }, []);
 
   return (
     <div className="relative min-h-screen font-sans selection:bg-emerald-600 selection:text-white text-gray-900 pb-16">
@@ -58,7 +107,7 @@ export default function InsurancePage() {
           {activeView === "schemes" && (
             <div className="max-w-6xl w-full mx-auto">
               <BankSchemeList
-                schemes={mockBankSchemes}
+                schemes={schemes}
                 onSelectScheme={(scheme) => {
                   setSelectedScheme(scheme);
                   setActiveView("schemeDetails");
@@ -80,7 +129,7 @@ export default function InsurancePage() {
 
           {activeView === "dashboard" && (
             /* Wise.com 50/50 Dual Stage Split Grid (Light Theme) */
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-center">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-start">
               {/* ========================================================= */}
               {/* LEFT STAGE: The "Why" — Telemetry, Risk & Ground Truth    */}
               {/* ========================================================= */}
@@ -184,61 +233,79 @@ export default function InsurancePage() {
                   </div>
 
                   {/* Parcel Details Strip with eligibility pre-fill checkmarks — PRD §27 */}
-                  <div className="p-4 rounded-2xl bg-gray-50/90 border border-gray-200/90 space-y-2 text-xs sm:text-sm">
+                  <div className="p-4 rounded-2xl bg-gray-50/90 border border-gray-200/90 space-y-3 text-xs sm:text-sm">
                     <div className="flex items-center justify-between">
                       <span className="font-bold text-gray-700">Pre-Filled Farm Profile</span>
                       <button
                         onClick={() => setIsEditingParcel(!isEditingParcel)}
-                        className="text-xs font-extrabold text-emerald-800 hover:underline"
+                        className="text-xs font-extrabold text-emerald-800 hover:underline flex items-center gap-1"
                       >
-                        {isEditingParcel ? "Done" : "Edit Details"}
+                        {isEditingParcel ? "✓ Save" : "✏ Edit Details"}
                       </button>
                     </div>
 
                     {isEditingParcel ? (
-                      <div className="grid grid-cols-2 gap-2 pt-2 text-xs">
-                        <div>
-                          <label className="text-gray-500 font-medium">Crop</label>
-                          <input
-                            type="text"
-                            value={farmer.crop}
-                            onChange={(e) => setFarmer({ ...farmer, crop: e.target.value })}
-                            className="w-full px-2.5 py-1.5 rounded-lg border border-gray-300 bg-white"
-                          />
-                        </div>
-                        <div>
-                          <label className="text-gray-500 font-medium">Land Area</label>
-                          <input
-                            type="text"
-                            value={farmer.area}
-                            onChange={(e) => setFarmer({ ...farmer, area: e.target.value })}
-                            className="w-full px-2.5 py-1.5 rounded-lg border border-gray-300 bg-white"
-                          />
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                        {[
+                          { field: "name", label: "Full Name", type: "text" },
+                          { field: "fatherName", label: "Father's Name", type: "text" },
+                          { field: "mobile", label: "Mobile Number", type: "tel" },
+                          { field: "village", label: "Village", type: "text" },
+                          { field: "district", label: "District", type: "text" },
+                          { field: "state", label: "State", type: "text" },
+                          { field: "crop", label: "Crop", type: "text" },
+                          { field: "area", label: "Land Area", type: "text" },
+                          { field: "season", label: "Season", type: "text" },
+                          { field: "sumInsured", label: "Sum Insured", type: "text" },
+                        ].map(({ field, label, type }) => (
+                          <div key={field}>
+                            <label className="text-[11px] text-gray-500 font-bold uppercase tracking-wide block mb-1">{label}</label>
+                            <input
+                              type={type}
+                              value={(farmer as any)[field] ?? ""}
+                              onChange={(e) => setFarmer({ ...farmer, [field]: e.target.value })}
+                              className="w-full px-3 py-2 rounded-xl border border-gray-200 bg-white text-sm font-semibold text-gray-800 focus:outline-none focus:ring-2 focus:ring-emerald-400 transition"
+                            />
+                          </div>
+                        ))}
+                        <div className="sm:col-span-2 flex items-center gap-3 pt-1">
+                          <label className="flex items-center gap-2 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={farmer.aadhaarLinked}
+                              onChange={(e) => setFarmer({ ...farmer, aadhaarLinked: e.target.checked })}
+                              className="w-4 h-4 accent-emerald-600"
+                            />
+                            <span className="text-xs font-semibold text-gray-700">Aadhaar Linked</span>
+                          </label>
+                          <label className="flex items-center gap-2 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={farmer.kccHolder}
+                              onChange={(e) => setFarmer({ ...farmer, kccHolder: e.target.checked })}
+                              className="w-4 h-4 accent-emerald-600"
+                            />
+                            <span className="text-xs font-semibold text-gray-700">KCC Holder</span>
+                          </label>
                         </div>
                       </div>
                     ) : (
                       <div className="space-y-1.5 pt-1">
-                        {[
-                          { label: "State", value: farmer.state },
-                          { label: "District", value: farmer.district },
-                          { label: "Crop", value: farmer.crop },
-                          { label: "Area", value: farmer.area },
-                          { label: "Season", value: farmer.season },
-                        ].map(({ label, value }) => (
-                          <div key={label} className="flex items-center justify-between text-xs">
-                            <span className="flex items-center gap-1.5 text-emerald-700 font-semibold">
-                              <span className="text-emerald-600 font-black">&#10003;</span>
-                              We already have this information
-                            </span>
-                            <span className="font-bold text-gray-800">{label}: {value}</span>
-                          </div>
-                        )).slice(0, 1)}
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="flex items-center gap-1.5 text-emerald-700 font-semibold">
+                            <span className="text-emerald-600 font-black">&#10003;</span>
+                            We already have this information
+                          </span>
+                          <span className="font-bold text-gray-800">State: {farmer.state}</span>
+                        </div>
                         <div className="flex flex-wrap items-center gap-2 pt-1">
                           <span className="px-2.5 py-1 rounded-lg bg-white border border-gray-200 font-extrabold text-gray-900 text-xs">&#10003; State: {farmer.state}</span>
                           <span className="px-2.5 py-1 rounded-lg bg-white border border-gray-200 font-extrabold text-gray-900 text-xs">&#10003; {farmer.crop}</span>
                           <span className="px-2.5 py-1 rounded-lg bg-white border border-gray-200 font-extrabold text-gray-900 text-xs">&#10003; {farmer.area}</span>
                           <span className="px-2.5 py-1 rounded-lg bg-white border border-gray-200 font-extrabold text-gray-900 text-xs">&#10003; {farmer.district}</span>
                           <span className="px-2.5 py-1 rounded-lg bg-white border border-gray-200 font-extrabold text-gray-900 text-xs">&#10003; {farmer.season}</span>
+                          {farmer.mobile && <span className="px-2.5 py-1 rounded-lg bg-white border border-gray-200 font-extrabold text-gray-900 text-xs">&#10003; {farmer.mobile}</span>}
+                          {farmer.village && <span className="px-2.5 py-1 rounded-lg bg-white border border-gray-200 font-extrabold text-gray-900 text-xs">&#10003; {farmer.village}</span>}
                         </div>
                       </div>
                     )}
@@ -269,36 +336,8 @@ export default function InsurancePage() {
                     </div>
                   </div>
 
-                  {/* Attached Documents Mini-Checklist */}
-                  <div className="space-y-2 text-xs">
-                    <div className="flex items-center justify-between text-gray-500 font-bold uppercase tracking-wider text-[11px]">
-                      <span>Document Checklist</span>
-                      <span className="text-emerald-800">
-                        {documents.filter((d) => d.status === "Uploaded").length} of {documents.length} Attached
-                      </span>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                      {documents.map((doc) => (
-                        <div
-                          key={doc.id}
-                          className="p-2.5 rounded-xl bg-gray-50 border border-gray-200 flex items-center justify-between gap-2"
-                        >
-                          <div className="truncate font-semibold text-gray-800">
-                            {doc.status === "Uploaded" ? "✓" : "○"} {doc.name.split("/")[0]}
-                          </div>
-                          <span
-                            className={`px-2 py-0.5 rounded-md text-[10px] font-extrabold ${doc.status === "Uploaded"
-                                ? "bg-emerald-100 text-emerald-800"
-                                : "bg-amber-100 text-amber-900"
-                              }`}
-                          >
-                            {doc.status}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
+                  {/* Attached Documents Mini-Checklist — fully editable */}
+                  <DocumentChecklist documents={documents} setDocuments={setDocuments} />
 
                   {/* Single Big Primary Action CTA (Wise style) */}
                   <div className="pt-2">

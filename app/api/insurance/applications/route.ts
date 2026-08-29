@@ -1,59 +1,32 @@
-import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
-
-export async function GET(request: Request) {
-  try {
-    const { searchParams } = new URL(request.url);
-    const farmerId = searchParams.get("farmerId");
-
-    if (!farmerId) {
-      return NextResponse.json({ error: "farmerId is required" }, { status: 400 });
-    }
-
-    const applications = await prisma.schemeApplication.findMany({
-      where: { farmerId },
-      include: {
-        scheme: {
-          include: { bank: true }
-        }
-      },
-      orderBy: { appliedAt: "desc" },
-    });
-
-    return NextResponse.json(applications);
-  } catch (error) {
-    console.error("Error fetching applications:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
-  }
-}
+import { NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { farmerId, schemeId } = body;
-
+    
+    const { farmerId, schemeId, documents } = body;
+    
     if (!farmerId || !schemeId) {
-      return NextResponse.json({ error: "farmerId and schemeId are required" }, { status: 400 });
+      return NextResponse.json({ error: 'Missing farmerId or schemeId' }, { status: 400 });
     }
 
-    // Generate a simple ID for demo, usually this is handled by DB defaults if using uuid/cuid
-    const applicationId = `APP-${Math.random().toString(36).substring(2, 9).toUpperCase()}`;
-
-    const newApplication = await prisma.schemeApplication.create({
+    // Create a new application in the existing scheme_applications table
+    const newApp = await prisma.schemeApplication.create({
       data: {
-        applicationId,
+        id: `APP-${Date.now()}`.substring(0, 30),
         farmerId,
         schemeId,
-        status: "pending",
-      },
-      include: {
-        scheme: true,
+        eligibility_percent: 100, // Mocked 100% eligibility for demo
+        matched_reasons: JSON.stringify(['Met all bank scheme criteria']),
+        status: 'submitted',
+        submitted_at: new Date()
       }
     });
 
-    return NextResponse.json(newApplication, { status: 201 });
+    return NextResponse.json({ success: true, application: newApp });
   } catch (error) {
-    console.error("Error creating application:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    console.error('Error submitting application:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
