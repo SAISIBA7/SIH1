@@ -327,6 +327,7 @@ export default function SmartCropDashboard() {
 
             {/* Profile User */}
             <button
+              onClick={() => router.push('/farmer-profile')}
               onMouseEnter={() => setHoveredAction('user')}
               onMouseLeave={() => setHoveredAction(null)}
               className={`h-11 rounded-full flex items-center justify-center bg-white/80 hover:bg-white border border-black/6 hover:border-black/15 transition-all duration-300 shadow-sm relative cursor-pointer group ${
@@ -581,6 +582,7 @@ export default function SmartCropDashboard() {
 
               {/* Farm Overview Card */}
               <motion.div
+                onClick={() => router.push('/farmer-profile')}
                 whileHover={{ scale: 1.045, y: -8, transition: { type: 'spring', stiffness: 450, damping: 12 } }}
                 whileTap={{ scale: 0.92, transition: { type: 'spring', stiffness: 550, damping: 14 } }}
                 className="relative overflow-hidden rounded-[28px] p-6 text-[#1B1E19] transition-colors duration-300 hover:shadow-[0_24px_50px_-10px_rgba(214,242,75,0.35)] cursor-pointer"
@@ -605,19 +607,19 @@ export default function SmartCropDashboard() {
                 </div>
                 <div className="grid grid-cols-2 gap-y-5 gap-x-4">
                   <div className="bg-black/4 p-2.5 rounded-xl border border-black/6">
-                    <div className="text-[11px] font-semibold tracking-wide uppercase text-[#1B1E19]/60 mb-1">LAND SIZE</div>
+                    <div className="text-[11px] font-semibold tracking-wide uppercase text-[#1B1E19]/60 mb-1">{t('land_size_label', 'LAND SIZE')}</div>
                     <div className="font-semibold text-[#1B1E19]">2.5 Acres</div>
                   </div>
                   <div className="bg-black/4 p-2.5 rounded-xl border border-black/6">
-                    <div className="text-[11px] font-semibold tracking-wide uppercase text-[#1B1E19]/60 mb-1">CROP</div>
+                    <div className="text-[11px] font-semibold tracking-wide uppercase text-[#1B1E19]/60 mb-1">{t('crop_label', 'CROP')}</div>
                     <div className="font-semibold text-[#1B1E19]">Paddy (Rice)</div>
                   </div>
                   <div className="bg-black/4 p-2.5 rounded-xl border border-black/6">
-                    <div className="text-[11px] font-semibold tracking-wide uppercase text-[#1B1E19]/60 mb-1">SEASON</div>
+                    <div className="text-[11px] font-semibold tracking-wide uppercase text-[#1B1E19]/60 mb-1">{t('season_label', 'SEASON')}</div>
                     <div className="font-semibold text-[#1B1E19]">Kharif 2026</div>
                   </div>
                   <div className="bg-black/4 p-2.5 rounded-xl border border-black/6">
-                    <div className="text-[11px] font-semibold tracking-wide uppercase text-[#1B1E19]/60 mb-1">SOWING DATE</div>
+                    <div className="text-[11px] font-semibold tracking-wide uppercase text-[#1B1E19]/60 mb-1">{t('sowing_date_label', 'SOWING DATE')}</div>
                     <div className="font-semibold text-[#1B1E19]">June 15</div>
                   </div>
                 </div>
@@ -638,7 +640,7 @@ export default function SmartCropDashboard() {
                   }}
                 >
                   <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-[#1B1E19]">
-                    <Navigation size={18} className="text-[#E4572E] animate-pulse" /> Active Field Locations
+                    <Navigation size={18} className="text-[#E4572E] animate-pulse" /> {t('active_field_locations', 'Active Field Locations')}
                   </h3>
                   <div className="space-y-4">
                     {farmerLocations.map((loc, idx) => (
@@ -675,13 +677,13 @@ export default function SmartCropDashboard() {
                 }}
               >
                 <div className="absolute -top-10 -right-10 w-32 h-32 bg-lime-400/10 rounded-full blur-2xl pointer-events-none" />
-                <h2 className="text-[22px] font-semibold mb-5 tracking-tight text-[#1B1E19]">Crop Health</h2>
+                <h2 className="text-[22px] font-semibold mb-5 tracking-tight text-[#1B1E19]">{t('crop_health', 'Crop Health')}</h2>
 
                 {/* NDVI */}
                 <div className="mb-6 bg-linear-to-br from-[#EAF7B8]/40 via-lime-500/10 to-transparent rounded-2xl p-4 border border-[#D6F24B]/40 shadow-sm">
                   <div className="flex justify-between items-end mb-3">
-                    <div className="text-sm font-semibold text-[#1B1E19]">NDVI Trend</div>
-                    <div className="text-sm font-bold text-[#E4572E]">↓18% vs 30-day avg</div>
+                    <div className="text-sm font-semibold text-[#1B1E19]">{t('ndvi_trend', 'NDVI Trend')}</div>
+                    <div className="text-sm font-bold text-[#E4572E]">↓18% {t('vs_30_day_avg', 'vs 30-day avg')}</div>
                   </div>
                   <div className="h-16 w-full">
                     <ResponsiveContainer width="100%" height="100%">
@@ -702,8 +704,8 @@ export default function SmartCropDashboard() {
                 <div className="space-y-5">
                   <div>
                     <div className="flex justify-between text-sm mb-2">
-                      <span className="text-[#6B6F63] flex items-center gap-1.5 font-medium"><Droplets size={16} className="text-blue-500" /> Soil Moisture</span>
-                      <span className="font-bold text-[#E4572E]">Low (22%)</span>
+                      <span className="text-[#6B6F63] flex items-center gap-1.5 font-medium"><Droplets size={16} className="text-blue-500" /> {t('soil_moisture', 'Soil Moisture')}</span>
+                      <span className="font-bold text-[#E4572E]">{t('low_moisture', 'Low (22%)')}</span>
                     </div>
                     <div className="h-2.5 w-full bg-black/8 rounded-full overflow-hidden p-0.5">
                       <div className="h-full bg-linear-to-r from-amber-500 to-[#E4572E] rounded-full shadow-sm" style={{ width: '22%' }}></div>
@@ -717,14 +719,14 @@ export default function SmartCropDashboard() {
                       </div>
                     </div>
                     <div>
-                      <div className="text-sm font-semibold text-[#1B1E19]">Overcast, no rain</div>
-                      <div className="text-xs text-[#6B6F63] mt-0.5">Expected for next 5 days</div>
+                      <div className="text-sm font-semibold text-[#1B1E19]">{t('overcast_no_rain', 'Overcast, no rain')}</div>
+                      <div className="text-xs text-[#6B6F63] mt-0.5">{t('expected_next_5_days', 'Expected for next 5 days')}</div>
                     </div>
                   </div>
 
                   <div className="flex justify-between items-center pt-1">
-                    <span className="text-sm font-medium text-[#6B6F63]">Crop Stage</span>
-                    <span className="px-3.5 py-1.5 bg-[#D6F24B] text-[#1B1E19] text-xs font-bold tracking-wide uppercase rounded-full shadow-[0_0_14px_rgba(214,242,75,0.4)] border border-lime-300">Flowering</span>
+                    <span className="text-sm font-medium text-[#6B6F63]">{t('crop_stage', 'Crop Stage')}</span>
+                    <span className="px-3.5 py-1.5 bg-[#D6F24B] text-[#1B1E19] text-xs font-bold tracking-wide uppercase rounded-full shadow-[0_0_14px_rgba(214,242,75,0.4)] border border-lime-300">{t('flowering', 'Flowering')}</span>
                   </div>
                 </div>
               </motion.div>
@@ -749,10 +751,10 @@ export default function SmartCropDashboard() {
               <div className="absolute -bottom-10 right-10 w-72 h-72 bg-[#D6F24B]/15 rounded-full blur-3xl pointer-events-none" />
 
               <div className="relative z-10 flex justify-between items-start mb-8">
-                <h2 className="text-[28px] font-semibold tracking-tight text-[#1B1E19]">Distress Risk Intelligence</h2>
+                <h2 className="text-[28px] font-semibold tracking-tight text-[#1B1E19]">{t('distress_intelligence', 'Distress Risk Intelligence')}</h2>
                 <div className="flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-linear-to-r from-red-500/15 to-[#E4572E]/15 text-[#E4572E] text-[11px] font-extrabold tracking-wider border border-[#E4572E]/40 uppercase shadow-sm">
                   <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-                  <span>HIGH RISK</span>
+                  <span>{t('high_risk', 'HIGH RISK')}</span>
                 </div>
               </div>
 
@@ -785,13 +787,13 @@ export default function SmartCropDashboard() {
                       </AreaChart>
                     </ResponsiveContainer>
                   </div>
-                  <div className="text-[11px] font-semibold tracking-wider uppercase text-[#E4572E] mt-2">Risk climbing over 30 days</div>
+                  <div className="text-[11px] font-semibold tracking-wider uppercase text-[#E4572E] mt-2">{t('risk_climbing', 'Risk climbing over 30 days')}</div>
                 </div>
 
                 {/* Factors Side */}
                 <div className="flex-1 flex flex-col justify-center gap-6">
                   <div>
-                    <h3 className="text-[11px] font-bold tracking-wider text-[#6B6F63] uppercase mb-4">Contributing Factors</h3>
+                    <h3 className="text-[11px] font-bold tracking-wider text-[#6B6F63] uppercase mb-4">{t('contributing_factors', 'Contributing Factors')}</h3>
                     <div className="space-y-3.5">
                       <div className="flex justify-between items-center bg-black/3 hover:bg-black/6 border border-black/6 hover:border-black/12 px-4 py-3.5 rounded-2xl shadow-sm transition-all duration-300 group/factor">
                         <div className="flex items-center gap-3">
@@ -800,7 +802,7 @@ export default function SmartCropDashboard() {
                               <Wind size={16} className="text-[#E4572E]" strokeWidth={2.2} />
                             </div>
                           </div>
-                          <span className="text-[15px] font-semibold text-[#1B1E19]">Rainfall −35%</span>
+                          <span className="text-[15px] font-semibold text-[#1B1E19]">{t('rainfall_deficit_factor', 'Rainfall −35%')}</span>
                         </div>
                         <span className="text-[#E4572E] text-[15px] font-bold">+28 pts</span>
                       </div>
@@ -812,7 +814,7 @@ export default function SmartCropDashboard() {
                               <Activity size={16} className="text-amber-700" strokeWidth={2.2} />
                             </div>
                           </div>
-                          <span className="text-[15px] font-semibold text-[#1B1E19]">Market price −22%</span>
+                          <span className="text-[15px] font-semibold text-[#1B1E19]">{t('market_deficit_factor', 'Market price −22%')}</span>
                         </div>
                         <span className="text-amber-700 text-[15px] font-bold">+19 pts</span>
                       </div>
@@ -824,7 +826,7 @@ export default function SmartCropDashboard() {
                               <AlertTriangle size={16} className="text-red-600" strokeWidth={2.2} />
                             </div>
                           </div>
-                          <span className="text-[15px] font-semibold text-[#1B1E19]">Loan due in 8 days</span>
+                          <span className="text-[15px] font-semibold text-[#1B1E19]">{t('loan_due_factor', 'Loan due in 8 days')}</span>
                         </div>
                         <span className="text-amber-700 text-[15px] font-bold">+15 pts</span>
                       </div>
@@ -833,7 +835,7 @@ export default function SmartCropDashboard() {
 
                   <Link href="/insurance" className="block w-full">
                     <button className="w-full py-4 mt-2 rounded-full bg-[#D6F24B] text-[#1B1E19] font-bold flex justify-center items-center gap-2 hover:bg-[#cbf026] hover:scale-[1.02] active:scale-[0.99] transition-all duration-300 shadow-[0_0_28px_rgba(214,242,75,0.4),0_8px_20px_rgba(0,0,0,0.06)] border border-lime-300/60">
-                      View Insurance Options <ArrowRight size={18} />
+                      {t('view_insurance_options', 'View Insurance Options')} <ArrowRight size={18} />
                     </button>
                   </Link>
                 </div>
@@ -864,8 +866,8 @@ export default function SmartCropDashboard() {
                     </div>
                   </div>
                   <div>
-                    <h3 className="font-semibold text-[#1B1E19] text-[15px]">Switch irrigation</h3>
-                    <div className="text-[13px] text-[#6B6F63] mt-0.5">Update schedule based on soil</div>
+                    <h3 className="font-semibold text-[#1B1E19] text-[15px]">{t('switch_irrigation', 'Switch irrigation')}</h3>
+                    <div className="text-[13px] text-[#6B6F63] mt-0.5">{t('update_schedule_soil', 'Update schedule based on soil')}</div>
                   </div>
                 </div>
                 <ChevronRight className="text-black/30 group-hover:text-black group-hover:translate-x-1 transition-all" />
@@ -892,8 +894,8 @@ export default function SmartCropDashboard() {
                     </div>
                   </div>
                   <div>
-                    <h3 className="font-semibold text-[#1B1E19] text-[15px]">Apply insurance</h3>
-                    <div className="text-[13px] text-[#6B6F63] mt-0.5">High risk threshold crossed</div>
+                    <h3 className="font-semibold text-[#1B1E19] text-[15px]">{t('apply_insurance', 'Apply insurance')}</h3>
+                    <div className="text-[13px] text-[#6B6F63] mt-0.5">{t('high_risk_crossed', 'High risk threshold crossed')}</div>
                   </div>
                 </div>
                 <ChevronRight className="text-black/30 group-hover:text-black group-hover:translate-x-1 transition-all" />
@@ -916,12 +918,12 @@ export default function SmartCropDashboard() {
                 <div className="flex items-center gap-4">
                   <div className="relative flex w-12 h-12 rounded-2xl bg-linear-to-br from-[#86EFAC] to-[#22C55E] p-px shadow-[0_8px_20px_-4px_rgba(34,197,94,0.55)] group-hover:scale-110 transition-transform duration-300 shrink-0">
                     <div className="w-full h-full rounded-[14px] bg-linear-to-b from-white/70 via-[#ECFDF5]/80 to-[#DCFCE7]/80 backdrop-blur-md flex items-center justify-center border border-white/80 shadow-inner">
-                      <Leaf size={20} className="text-emerald-800" strokeWidth={2.2} />
+                      <Sparkles size={20} className="text-[#1B1E19]" strokeWidth={2.2} />
                     </div>
                   </div>
                   <div>
-                    <h3 className="font-semibold text-[#1B1E19] text-[15px]">Alternative crop</h3>
-                    <div className="text-[13px] text-[#6B6F63] mt-0.5">Groundnut (88% suitable)</div>
+                    <h3 className="font-semibold text-[#1B1E19] text-[15px]">{t('alternative_crops', 'Alternative crops')}</h3>
+                    <div className="text-[13px] text-[#6B6F63] mt-0.5">{t('explore_resilient_options', 'Explore climate-resilient options')}</div>
                   </div>
                 </div>
                 <ChevronRight className="text-black/30 group-hover:text-black group-hover:translate-x-1 transition-all" />

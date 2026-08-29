@@ -27,28 +27,28 @@ interface DashboardData {
 }
 
 // Verification badge config per DB verification_status (banks.verification_status)
-const VERIFICATION_BADGES: Record<string, { label: string; bg: string; color: string; border: string; dot: string }> = {
-  verified:     { label: '✓ VERIFIED BANK',     bg: '#ecfdf5', color: '#065f46', border: '#a7f3d0', dot: '#10b981' },
-  under_review: { label: '⏳ UNDER REVIEW',      bg: '#fffbeb', color: '#92400e', border: '#fde68a', dot: '#f59e0b' },
-  submitted:    { label: 'SUBMITTED FOR REVIEW', bg: '#eff6ff', color: '#1e40af', border: '#bfdbfe', dot: '#3b82f6' },
-  draft:        { label: 'DRAFT PROFILE',        bg: '#f8fafc', color: '#475569', border: '#e2e8f0', dot: '#94a3b8' },
-  rejected:     { label: '✗ REJECTED',           bg: '#fef2f2', color: '#991b1b', border: '#fecaca', dot: '#ef4444' },
-  suspended:    { label: 'SUSPENDED',            bg: '#fef2f2', color: '#991b1b', border: '#fecaca', dot: '#ef4444' },
+const VERIFICATION_BADGES: Record<string, { key: string; defaultLabel: string; bg: string; color: string; border: string; dot: string }> = {
+  verified:     { key: 'verified_bank',      defaultLabel: '✓ VERIFIED BANK',       bg: '#ecfdf5', color: '#065f46', border: '#a7f3d0', dot: '#10b981' },
+  under_review: { key: 'under_review_badge', defaultLabel: '⏳ UNDER REVIEW',        bg: '#fffbeb', color: '#92400e', border: '#fde68a', dot: '#f59e0b' },
+  submitted:    { key: 'submitted_badge',   defaultLabel: 'SUBMITTED FOR REVIEW',   bg: '#eff6ff', color: '#1e40af', border: '#bfdbfe', dot: '#3b82f6' },
+  draft:        { key: 'draft_badge',       defaultLabel: 'DRAFT PROFILE',          bg: '#f8fafc', color: '#475569', border: '#e2e8f0', dot: '#94a3b8' },
+  rejected:     { key: 'rejected_badge',    defaultLabel: '✗ REJECTED',             bg: '#fef2f2', color: '#991b1b', border: '#fecaca', dot: '#ef4444' },
+  suspended:    { key: 'suspended_badge',   defaultLabel: 'SUSPENDED',              bg: '#fef2f2', color: '#991b1b', border: '#fecaca', dot: '#ef4444' },
 };
 
 // DB status -> display label + badge colors (8 statuses in financial_facilities)
-const STATUS_DISPLAY: Record<string, { label: string; bg: string; color: string; border: string }> = {
-  published:    { label: 'Published',    bg: '#dcfce7', color: '#166534', border: '#bbf7d0' },
-  draft:        { label: 'Draft',        bg: '#fef3c7', color: '#b45309', border: '#fde68a' },
-  submitted:    { label: 'Submitted',    bg: '#dbeafe', color: '#1e40af', border: '#bfdbfe' },
-  under_review: { label: 'Under Review', bg: '#f5f3ff', color: '#7c3aed', border: '#ddd6fe' },
-  approved:     { label: 'Approved',     bg: '#ecfdf5', color: '#065f46', border: '#a7f3d0' },
-  unpublished:  { label: 'Unpublished',  bg: '#f1f5f9', color: '#475569', border: '#e2e8f0' },
-  expired:      { label: 'Expired',      bg: '#f1f5f9', color: '#475569', border: '#e2e8f0' },
-  suspended:    { label: 'Suspended',    bg: '#fef2f2', color: '#991b1b', border: '#fecaca' },
+const STATUS_DISPLAY: Record<string, { key: string; defaultLabel: string; bg: string; color: string; border: string }> = {
+  published:    { key: 'published',    defaultLabel: 'Published',    bg: '#dcfce7', color: '#166534', border: '#bbf7d0' },
+  draft:        { key: 'draft',        defaultLabel: 'Draft',        bg: '#fef3c7', color: '#b45309', border: '#fde68a' },
+  submitted:    { key: 'submitted',    defaultLabel: 'Submitted',    bg: '#dbeafe', color: '#1e40af', border: '#bfdbfe' },
+  under_review: { key: 'under_review', defaultLabel: 'Under Review', bg: '#f5f3ff', color: '#7c3aed', border: '#ddd6fe' },
+  approved:     { key: 'approved',     defaultLabel: 'Approved',     bg: '#ecfdf5', color: '#065f46', border: '#a7f3d0' },
+  unpublished:  { key: 'unpublished',  defaultLabel: 'Unpublished',  bg: '#f1f5f9', color: '#475569', border: '#e2e8f0' },
+  expired:      { key: 'expired',      defaultLabel: 'Expired',      bg: '#f1f5f9', color: '#475569', border: '#e2e8f0' },
+  suspended:    { key: 'suspended',    defaultLabel: 'Suspended',    bg: '#fef2f2', color: '#991b1b', border: '#fecaca' },
 };
 
-const NEUTRAL_STATUS = { label: '', bg: '#f1f5f9', color: '#475569', border: '#e2e8f0' };
+const NEUTRAL_STATUS = { key: '', defaultLabel: '', bg: '#f1f5f9', color: '#475569', border: '#e2e8f0' };
 
 const fmtDate = (iso: string) =>
   new Date(iso).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
@@ -93,7 +93,7 @@ export default function BankDashboardPage() {
       <div style={BANK_PAGE_CONTAINER_STYLE}>
         <div style={{ maxWidth: '920px', margin: '0 auto', textAlign: 'center', padding: '5rem 1rem' }}>
           <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>🏦</div>
-          <p style={{ color: '#475569', fontWeight: 700 }}>Loading dashboard…</p>
+          <p style={{ color: '#475569', fontWeight: 700 }}>{t('loading', 'Loading dashboard…')}</p>
         </div>
       </div>
     );
@@ -107,7 +107,7 @@ export default function BankDashboardPage() {
           <Card>
             <div style={{ textAlign: 'center', padding: '2rem 1rem' }}>
               <div style={{ fontSize: '2.2rem', marginBottom: '0.75rem' }}>⚠️</div>
-              <h2 style={{ color: '#991b1b', margin: '0 0 0.5rem' }}>Could not load dashboard</h2>
+              <h2 style={{ color: '#991b1b', margin: '0 0 0.5rem' }}>{t('could_not_load_dashboard', 'Could not load dashboard')}</h2>
               <p style={{ color: '#475569', margin: 0 }}>{error}</p>
             </div>
           </Card>
@@ -196,7 +196,9 @@ export default function BankDashboardPage() {
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: vBadge.bg, border: `1px solid ${vBadge.border}`, padding: '0.45rem 1.1rem', borderRadius: '24px', boxShadow: '0 2px 6px rgba(16,185,129,0.1)' }}>
               <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: vBadge.dot, display: 'inline-block' }}></span>
-              <span style={{ color: vBadge.color, fontWeight: 800, fontSize: '0.85rem', letterSpacing: '0.02em' }}>{vBadge.label}</span>
+              <span style={{ color: vBadge.color, fontWeight: 800, fontSize: '0.85rem', letterSpacing: '0.02em' }}>
+                {t(vBadge.key, vBadge.defaultLabel)}
+              </span>
             </div>
           </div>
         </Card>
@@ -204,13 +206,13 @@ export default function BankDashboardPage() {
         {/* Stats */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1.25rem', marginBottom: '1.75rem' }}>
           {[
-            { label: 'Total Facilities', value: counts.total, color: '#166534', bg: 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)', border: '#bbf7d0' },
-            { label: 'Published', value: counts.published, color: '#166534', bg: 'linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%)', border: '#a7f3d0' },
-            { label: 'Draft', value: counts.draft, color: '#92400e', bg: 'linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)', border: '#fde68a' },
-            { label: 'Under Review', value: counts.underReview, color: '#6b21a8', bg: 'linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%)', border: '#e9d5ff' },
+            { key: 'total_facilities', label: 'Total Facilities', value: counts.total, color: '#166534', bg: 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)', border: '#bbf7d0' },
+            { key: 'published', label: 'Published', value: counts.published, color: '#166534', bg: 'linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%)', border: '#a7f3d0' },
+            { key: 'draft', label: 'Draft', value: counts.draft, color: '#92400e', bg: 'linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)', border: '#fde68a' },
+            { key: 'under_review', label: 'Under Review', value: counts.underReview, color: '#6b21a8', bg: 'linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%)', border: '#e9d5ff' },
           ].map(s => (
             <div
-              key={s.label}
+              key={s.key}
               className="bank-stat-card"
               style={{
                 background: s.bg,
@@ -222,7 +224,9 @@ export default function BankDashboardPage() {
               }}
             >
               <div style={{ fontSize: '2.4rem', fontWeight: 900, color: s.color, lineHeight: 1 }}>{s.value}</div>
-              <div style={{ fontSize: '0.78rem', color: '#475569', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginTop: '0.5rem' }}>{s.label}</div>
+              <div style={{ fontSize: '0.78rem', color: '#475569', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginTop: '0.5rem' }}>
+                {t(s.key, s.label)}
+              </div>
             </div>
           ))}
         </div>
@@ -232,15 +236,15 @@ export default function BankDashboardPage() {
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.25rem' }}>
             <span style={{ fontSize: '1.1rem' }}>⚡</span>
             <h3 style={{ color: '#166534', fontWeight: 800, margin: 0, fontSize: '1rem', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-              Quick Actions
+              {t('quick_actions', 'Quick Actions')}
             </h3>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
             {[
-              { href: `/bank-portal/facilities/add?bankId=${bankId}`, label: '+ Add Facility', icon: '📋', primary: true },
-              { href: '/bank-portal/facilities/manage', label: 'Manage Facilities', icon: '⚙️', primary: false },
-              { href: '/bank-portal/register', label: 'Edit Bank Profile', icon: '🏦', primary: false },
-              { href: '/financial-support/list', label: 'Preview Farmer View', icon: '👁️', primary: false },
+              { href: `/bank-portal/facilities/add?bankId=${bankId}`, key: 'add_facility', label: '+ Add Facility', icon: '📋', primary: true },
+              { href: '/bank-portal/facilities/manage', key: 'manage_facilities', label: 'Manage Facilities', icon: '⚙️', primary: false },
+              { href: '/bank-portal/register', key: 'edit_bank_profile', label: 'Edit Bank Profile', icon: '🏦', primary: false },
+              { href: '/financial-support/list', key: 'preview_farmer_view', label: 'Preview Farmer View', icon: '👁️', primary: false },
             ].map(a => (
               <Link
                 key={a.href}
@@ -265,7 +269,7 @@ export default function BankDashboardPage() {
                 }}
               >
                 <span style={{ fontSize: '1.25rem' }}>{a.icon}</span>
-                <span style={{ color: a.primary ? '#ffffff' : '#166534' }}>{a.label}</span>
+                <span style={{ color: a.primary ? '#ffffff' : '#166534' }}>{t(a.key, a.label)}</span>
               </Link>
             ))}
           </div>
@@ -276,17 +280,17 @@ export default function BankDashboardPage() {
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
             <span style={{ fontSize: '1.1rem' }}>📄</span>
             <h3 style={{ color: '#1e40af', fontWeight: 800, margin: 0, fontSize: '1rem', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-              Recent Facilities
+              {t('recent_facilities', 'Recent Facilities')}
             </h3>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
             {data.recentFacilities.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '2rem 1rem', color: '#64748b', fontSize: '0.95rem' }}>
-                No facilities yet — click "+ Add Facility" to create your first listing.
+                {t('no_facilities_yet', 'No facilities yet — click "+ Add Facility" to create your first listing.')}
               </div>
             ) : (
               data.recentFacilities.map(f => {
-                const sd = STATUS_DISPLAY[f.status] ?? { ...NEUTRAL_STATUS, label: f.status };
+                const sd = STATUS_DISPLAY[f.status] ?? { ...NEUTRAL_STATUS, defaultLabel: f.status };
                 return (
                   <div
                     key={f.id}
@@ -318,7 +322,7 @@ export default function BankDashboardPage() {
                         border: `1px solid ${sd.border}`,
                       }}
                     >
-                      {sd.label}
+                      {t(sd.key, sd.defaultLabel)}
                     </span>
                   </div>
                 );

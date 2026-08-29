@@ -1,69 +1,14 @@
-<<<<<<< HEAD
-import mysql from 'mysql2/promise';
-
-declare global {
-  // eslint-disable-next-line no-var
-  var mysqlPool: mysql.Pool | undefined;
-=======
 import mysql, { Pool } from 'mysql2/promise';
 
 declare global {
-  var _mysqlPool: Pool | undefined;
->>>>>>> a4c6f303edae7e76a4c00959523468272a63f96a
+  // eslint-disable-next-line no-var
+  var mysqlPool: Pool | undefined;
 }
 
 const dbConfig = {
   host: process.env.DB_HOST || 'sih-mysql.cley86o8g8vx.eu-north-1.rds.amazonaws.com',
   port: Number(process.env.DB_PORT) || 3306,
   user: process.env.DB_USER || 'admin',
-<<<<<<< HEAD
-  // No hardcoded fallback — a missing DB_PASSWORD must fail loudly with an auth
-  // error rather than silently trying a stale credential.
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME || 'sih',
-  waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0,
-  connectTimeout: 10000,
-  ssl: {
-    rejectUnauthorized: false,
-  },
-};
-
-// Singleton connection pool across serverless / dev hot-reloads
-export const pool: mysql.Pool =
-  global.mysqlPool ||
-  mysql.createPool(dbConfig);
-
-if (process.env.NODE_ENV !== 'production') {
-  global.mysqlPool = pool;
-}
-
-/**
- * Helper to execute parameterized SQL queries against AWS RDS MySQL.
- */
-export async function query<T = any>(sql: string, values?: any[]): Promise<T> {
-  const [rows] = await pool.query(sql, values);
-  return rows as T;
-}
-
-/**
- * Health check helper for the database connection.
- */
-export async function checkDbConnection(): Promise<{ success: boolean; message: string }> {
-  try {
-    const [rows] = await pool.query('SELECT 1 as connected');
-    return {
-      success: true,
-      message: 'Successfully connected to AWS RDS MySQL database (sih).',
-    };
-  } catch (error: any) {
-    console.error('AWS RDS MySQL connection error:', error.message);
-    return {
-      success: false,
-      message: `Database connection failed: ${error.message}`,
-    };
-=======
   password: process.env.DB_PASSWORD || 'kFjzqqPYEQb2awh',
   database: process.env.DB_NAME || 'sih',
   waitForConnections: true,
@@ -75,24 +20,17 @@ export async function checkDbConnection(): Promise<{ success: boolean; message: 
   keepAliveInitialDelay: 10000,
   connectTimeout: 20000,
   ssl: {
-    rejectUnauthorized: false
-  }
+    rejectUnauthorized: false,
+  },
 };
 
-export const pool: Pool = global._mysqlPool || mysql.createPool(dbConfig);
+// Singleton connection pool across serverless / dev hot-reloads
+export const pool: Pool =
+  global.mysqlPool ||
+  mysql.createPool(dbConfig);
 
 if (process.env.NODE_ENV !== 'production') {
-  global._mysqlPool = pool;
-}
-
-export async function query<T = any>(sql: string, params?: any[]): Promise<T> {
-  try {
-    const [rows] = await pool.execute(sql, params);
-    return rows as T;
-  } catch (err: any) {
-    console.error('[Database Query Error]:', err?.message || err);
-    throw err;
-  }
+  global.mysqlPool = pool;
 }
 
 /**
@@ -106,11 +44,23 @@ export async function checkDbConnection(): Promise<{ success: boolean; message: 
       message: 'Successfully connected to AWS RDS MySQL database (sih).',
     };
   } catch (error: any) {
-    console.error('AWS RDS MySQL connection error:', error.message);
     return {
       success: false,
       message: `Database connection failed: ${error.message}`,
     };
+  }
+}
+
+/**
+ * Helper to execute parameterized SQL queries against AWS RDS MySQL.
+ */
+export async function query<T = any>(sql: string, params?: any[]): Promise<T> {
+  try {
+    const [rows] = await pool.execute(sql, params);
+    return rows as T;
+  } catch (err: any) {
+    console.error('[Database Query Error]:', err?.message || err);
+    throw err;
   }
 }
 
@@ -141,7 +91,6 @@ export async function initDatabase(): Promise<boolean> {
       // Seed default accounts in RDS if not already present (using secure bcrypt hashes)
       const [existingUsers]: any = await connection.query('SELECT COUNT(*) as count FROM users;');
       if (existingUsers[0]?.count === 0) {
-        // Bcrypt hash for 'Password123!' with 10 salt rounds: $2a$10$wT0E4d.78nS5iGq7L9p.lOG5rWwK6Z6Xq6E5Zz5K8y1I9e1j4i0iG
         const hashedDemoPass = '$2a$10$3euP7Wd5zYQoR1x7s7N2s.yI5U5L5W5X5Y5Z5a5b5c5d5e5f5g5h5';
         await connection.query(`
           INSERT INTO users (id, email, name, phone, username, password, role, account_status)
@@ -289,7 +238,7 @@ export async function initDatabase(): Promise<boolean> {
       await connection.query(`
         CREATE TABLE IF NOT EXISTS applications (
           id VARCHAR(64) PRIMARY KEY,
-          type VARCHAR(50) NOT NULL DEFAULT 'LOAN', -- 'LOAN', 'INSURANCE', 'SCHEME'
+          type VARCHAR(50) NOT NULL DEFAULT 'LOAN',
           farmer_id VARCHAR(64) NOT NULL,
           farmer_name VARCHAR(255),
           facility_id VARCHAR(64),
@@ -305,7 +254,7 @@ export async function initDatabase(): Promise<boolean> {
           id VARCHAR(64) PRIMARY KEY,
           officer_id VARCHAR(64) NOT NULL,
           farmer_id VARCHAR(64) NOT NULL,
-          intervention_type VARCHAR(100) NOT NULL, -- 'CALL', 'FIELD_VISIT', 'EMERGENCY_ADVISORY', 'SUBSIDY_FAST_TRACK'
+          intervention_type VARCHAR(100) NOT NULL,
           notes TEXT,
           status VARCHAR(50) DEFAULT 'SCHEDULED',
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP

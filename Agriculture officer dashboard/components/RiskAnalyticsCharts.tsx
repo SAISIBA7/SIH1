@@ -2,6 +2,7 @@
 
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 import { riskCounts } from "../data/farmers.mock";
+import { useLanguage } from "@/lib/language-context";
 
 const trendData = [
   { name: 'Q1', value: 60 },
@@ -10,18 +11,22 @@ const trendData = [
   { name: 'Q4', value: 81 },
 ];
 
-const distributionData = [
-  { name: 'High', value: riskCounts.high, color: '#EF4444' },
-  { name: 'Medium', value: riskCounts.medium, color: '#F59E0B' },
-  { name: 'Low', value: riskCounts.low, color: '#10B981' },
-];
-
 export default function RiskAnalyticsCharts() {
+  const { t } = useLanguage();
+
+  const distributionData = [
+    { name: t('high_risk', 'High'), value: riskCounts.high, color: '#EF4444' },
+    { name: t('medium_risk', 'Medium'), value: riskCounts.medium, color: '#F59E0B' },
+    { name: t('low_risk', 'Low'), value: riskCounts.low, color: '#10B981' },
+  ];
+
   return (
     <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
       {/* Risk Trend Line Chart */}
       <div className="glass p-6">
-        <h3 className="text-lg font-bold text-[#1A1A1A] mb-4">Risk Trend</h3>
+        <h3 className="text-lg font-bold text-[#1A1A1A] mb-4">
+          {t('risk_trend', 'Quarterly Risk Trend')}
+        </h3>
         <ResponsiveContainer width="100%" height={220}>
           <LineChart data={trendData}>
             <XAxis dataKey="name" stroke="#6B6B66" fontSize={12} tickLine={false} />
@@ -34,7 +39,9 @@ export default function RiskAnalyticsCharts() {
 
       {/* District Risk Distribution Pie Chart */}
       <div className="glass p-6">
-        <h3 className="text-lg font-bold text-[#1A1A1A] mb-4">District Risk Distribution</h3>
+        <h3 className="text-lg font-bold text-[#1A1A1A] mb-4">
+          {t('risk_distribution', 'District Risk Distribution')}
+        </h3>
         <ResponsiveContainer width="100%" height={220}>
           <PieChart>
             <Pie data={distributionData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label>

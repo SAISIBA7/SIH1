@@ -1,11 +1,10 @@
-import FarmerDashboard from "@/farmer deshboard/deshboard";
+import { redirect } from "next/navigation";
 
 export const metadata = {
-  title: "Smart Crop | Authentication",
-  description: "Smart Crop authentication and login portal.",
+  title: "Smart Crop | Farmer Advisory & Authentication",
+  description: "Smart Crop authentication and dashboard portal.",
 };
 
 export default function Home() {
-  redirect("/authentication");
+  redirect("/dashboard");
 }
-
