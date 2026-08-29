@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styles from './EquipmentPage.module.css';
 
 interface EquipmentItem {
@@ -19,99 +19,6 @@ interface EquipmentItem {
   features: string[];
 }
 
-const equipmentData: EquipmentItem[] = [
-  {
-    id: 'tractor',
-    category: 'HEAVY MACHINERY',
-    categorySlug: 'heavy',
-    provider: 'Mahindra Farm Implements',
-    availability: 'Available Now',
-    matchScore: '98% match',
-    icon: '🚜',
-    name: 'Tractor (55 HP)',
-    specs: '4WD • Mahindra DI 575',
-    rate: '₹900',
-    unit: '/hour',
-    distance: '5 km away',
-    features: ['Professional driver/operator included', 'Full fuel tank on delivery'],
-  },
-  {
-    id: 'seeder',
-    category: 'SOWING & PLANTING',
-    categorySlug: 'sowing',
-    provider: 'Odisha Agro Implements',
-    availability: 'Available Now',
-    matchScore: '95% match',
-    icon: '🌱',
-    name: 'Automatic Seeder',
-    specs: 'Multi-Crop 9-Tyne Seed Drill',
-    rate: '₹500',
-    unit: '/hour',
-    distance: '3 km away',
-    features: ['Precise calibrated seed drop', 'Fits standard 3-point hitch'],
-  },
-  {
-    id: 'pump',
-    category: 'IRRIGATION SUPPORT',
-    categorySlug: 'irrigation',
-    provider: 'Surya Solar Systems',
-    availability: 'Available Today',
-    matchScore: '92% match',
-    icon: '💧',
-    name: 'Solar Water Pump',
-    specs: '5 HP High Flow Rate Submersible',
-    rate: '₹300',
-    unit: '/day',
-    distance: '2 km away',
-    features: ['50m heavy-duty discharge pipe', 'Zero power cost • Direct solar'],
-  },
-  {
-    id: 'harvester',
-    category: 'HARVESTING',
-    categorySlug: 'harvesting',
-    provider: 'Mayurbhanj Custom Hiring',
-    availability: 'Available Now',
-    matchScore: '96% match',
-    icon: '🌾',
-    name: 'Combine Harvester',
-    specs: 'Multi-Crop • Self-Propelled 4WD',
-    rate: '₹1,800',
-    unit: '/hour',
-    distance: '8 km away',
-    features: ['Licensed experienced operator', '2-Tonne grain tank capacity'],
-  },
-  {
-    id: 'rotavator',
-    category: 'TILLAGE & PLOUGHING',
-    categorySlug: 'tillage',
-    provider: 'Krushak Seva Kendra',
-    availability: 'Available Today',
-    matchScore: '94% match',
-    icon: '⚙️',
-    name: 'Heavy Rotavator',
-    specs: '6 Feet • 48 Boron Steel Blades',
-    rate: '₹450',
-    unit: '/hour',
-    distance: '4 km away',
-    features: ['Ultra-fine soil pulverization', 'Heavy-duty multi-speed gearbox'],
-  },
-  {
-    id: 'sprayer',
-    category: 'CROP PROTECTION',
-    categorySlug: 'spraying',
-    provider: 'GreenShield Agro Tools',
-    availability: 'Available Now',
-    matchScore: '90% match',
-    icon: '💨',
-    name: 'Power Boom Sprayer',
-    specs: '500L Tank • 24 Adjustable Nozzles',
-    rate: '₹400',
-    unit: '/hour',
-    distance: '3.5 km away',
-    features: ['Uniform chemical spray coverage', 'Tractor PTO-operated pump'],
-  },
-];
-
 const categories = [
   { label: 'All Equipment', slug: 'all', count: 6 },
   { label: 'Heavy Machinery', slug: 'heavy', count: 1 },
@@ -123,6 +30,14 @@ const categories = [
 
 export default function EquipmentPage() {
   const [activeCategory, setActiveCategory] = useState('all');
+  const [equipmentData, setEquipmentData] = useState<EquipmentItem[]>([]);
+
+  useEffect(() => {
+    fetch('/api/equipment')
+      .then((res) => res.json())
+      .then((data) => setEquipmentData(data))
+      .catch((err) => console.error('Failed to load equipment:', err));
+  }, []);
 
   const filteredEquipment = equipmentData.filter((item) => {
     if (activeCategory === 'all') return true;

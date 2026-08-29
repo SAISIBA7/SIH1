@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         { error: { code: "validation_error", message: "Password must be at least 6 characters." } },
         { status: 400 }
-      );
+`      );
     }
 
     const saltRounds = 10;
@@ -57,7 +57,7 @@ export async function POST(req: NextRequest) {
 
     try {
       // 1. Check duplicate phone in `farmers`
-      if (finalPhone) {
+`      if (finalPhone) {
         const [existing]: any = await connection.query(
           'SELECT id FROM farmers WHERE phone = ? LIMIT 1;',
           [finalPhone]
