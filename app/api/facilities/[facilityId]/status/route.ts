@@ -1,18 +1,24 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { query } from '@/lib/db';
+import { requireAuth } from '@/lib/auth-jwt';
 
 export const dynamic = 'force-dynamic';
 
 const VALID_STATUSES = new Set([
   'draft', 'submitted', 'under_review', 'approved',
-  'published', 'unpublished', 'expired', 'suspended',
+  'published', 'unpublished', 'expired', 'suspended', 'deleted',
 ]);
 
 export async function PATCH(
-  req: Request,
+  req: NextRequest,
   { params }: { params: Promise<{ facilityId: string }> }
 ) {
   try {
+    const authResult = requireAuth(req, ['bank', 'administrator', 'admin']);
+    if (authResult.errorResponse) {
+      return authResult.errorResponse;
+    }
+
     // This Next.js version passes route params as a Promise
     const { facilityId } = await params;
 
@@ -52,10 +58,10 @@ export async function PATCH(
     }
     const current = rows[0].status as string;
 
-    // ---- 4. Integrity guard: suspended/expired are terminal from this endpoint ----
-    if (current === 'suspended' || current === 'expired') {
+    // ---- 4. Integrity guard: suspended/expired/deleted are terminal from this endpoint ----
+    if (current === 'suspended' || current === 'expired' || current === 'deleted') {
       return NextResponse.json(
-        { error: `Facility is ${current} — this state can only be changed by a Smart Crop administrator.` },
+        { error: `Facility is ${current} — this state cannot be modified from this endpoint.` },
         { status: 409 }
       );
     }

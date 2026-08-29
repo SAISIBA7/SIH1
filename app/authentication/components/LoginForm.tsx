@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { FormInput, PasswordInput, LoadingButton, AuthAlert } from './FormControls';
 import { smartCropAuth, isValidIndianPhone, isValidEmail, UserSession } from '@/lib/smartcrop-auth';
+import { useLanguage } from '@/lib/language-context';
 
 interface LoginFormProps {
   onSuccess: (session: UserSession) => void;
@@ -15,6 +16,7 @@ export default function LoginForm({
   onForgotPassword,
   onNavigateToRegister,
 }: LoginFormProps) {
+  const { t } = useLanguage();
   const [authMethod, setAuthMethod] = useState<'mobile' | 'email'>('mobile');
   const [mobileNumber, setMobileNumber] = useState('');
   const [email, setEmail] = useState('');
@@ -105,10 +107,10 @@ export default function LoginForm({
       {/* Title */}
       <div className="text-center">
         <h2 className="text-xl font-semibold tracking-tight text-slate-900">
-          Sign in
+          {t('sign_in', 'Sign in')}
         </h2>
         <p className="text-xs text-slate-500 mt-1">
-          Welcome back to Smart Crop
+          {t('welcome_back', 'Welcome back to Smart Crop')}
         </p>
       </div>
 
@@ -137,7 +139,7 @@ export default function LoginForm({
             d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"
           />
         </svg>
-        <span>{isGoogleLoading ? 'Connecting to Google...' : 'Continue with Google'}</span>
+        <span>{isGoogleLoading ? 'Connecting to Google...' : t('continue_with_google', 'Continue with Google')}</span>
       </button>
 
       {/* Divider */}
@@ -164,7 +166,7 @@ export default function LoginForm({
               : 'text-slate-500 hover:text-slate-800'
           }`}
         >
-          Mobile
+          {t('mobile_number', 'Mobile')}
         </button>
         <button
           type="button"
@@ -179,7 +181,7 @@ export default function LoginForm({
               : 'text-slate-500 hover:text-slate-800'
           }`}
         >
-          Email
+          {t('email_address', 'Email')}
         </button>
       </div>
 
@@ -190,7 +192,7 @@ export default function LoginForm({
       <form onSubmit={handleSubmit} className="space-y-3" noValidate>
         {authMethod === 'mobile' ? (
           <FormInput
-            label="Mobile number"
+            label={t('mobile_number', 'Mobile number')}
             type="tel"
             required
             placeholder="Enter 10-digit number"
@@ -208,7 +210,7 @@ export default function LoginForm({
           />
         ) : (
           <FormInput
-            label="Email address"
+            label={t('email_address', 'Email address')}
             type="email"
             required
             placeholder="you@example.com"
@@ -227,14 +229,14 @@ export default function LoginForm({
         <div className="space-y-1">
           <div className="flex items-center justify-between">
             <label className="text-[11px] font-bold text-slate-800">
-              Password <span className="text-rose-500">*</span>
+              {t('password', 'Password')} <span className="text-rose-500">*</span>
             </label>
             <button
               type="button"
               onClick={onForgotPassword}
               className="text-[11px] text-emerald-700 hover:text-emerald-800 font-medium hover:underline focus:outline-none cursor-pointer"
             >
-              Forgot?
+              {t('forgot_password', 'Forgot?')}
             </button>
           </div>
           <PasswordInput
@@ -256,23 +258,23 @@ export default function LoginForm({
         <LoadingButton
           type="submit"
           isLoading={isLoading}
-          loadingText="Signing in..."
+          loadingText={t('signing_in', 'Signing in...')}
           className="mt-2"
         >
-          Sign in
+          {t('sign_in', 'Sign in')}
         </LoadingButton>
       </form>
 
       {/* Clean, Subtle Demo Shortcuts */}
       <div className="pt-2 border-t border-slate-200/50 flex items-center justify-between text-[11px] text-slate-500">
-        <span>Test accounts:</span>
+        <span>{t('test_accounts', 'Test accounts:')}</span>
         <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={() => fillDemo('farmer')}
             className="text-emerald-700 hover:underline font-medium cursor-pointer"
           >
-            Farmer
+            {t('role_farmer', 'Farmer')}
           </button>
           <span>•</span>
           <button
@@ -280,7 +282,7 @@ export default function LoginForm({
             onClick={() => fillDemo('admin')}
             className="text-emerald-700 hover:underline font-medium cursor-pointer"
           >
-            Officer
+            {t('role_officer', 'Officer')}
           </button>
           <span>•</span>
           <button
@@ -288,20 +290,20 @@ export default function LoginForm({
             onClick={() => fillDemo('bank')}
             className="text-emerald-700 hover:underline font-medium cursor-pointer"
           >
-            Bank
+            {t('role_bank', 'Bank')}
           </button>
         </div>
       </div>
 
       {/* Footer link */}
       <div className="text-center text-xs text-slate-500 pt-1">
-        <span>Don't have an account? </span>
+        <span>{t('dont_have_account', "Don't have an account?")} </span>
         <button
           type="button"
           onClick={onNavigateToRegister}
           className="text-emerald-700 hover:text-emerald-800 font-semibold hover:underline cursor-pointer"
         >
-          Create account
+          {t('create_account', 'Create account')}
         </button>
       </div>
     </div>

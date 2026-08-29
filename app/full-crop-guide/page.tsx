@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import FullCropGuidePage from "@/Full crop guide/Full crop guide";
 
 export const metadata = {

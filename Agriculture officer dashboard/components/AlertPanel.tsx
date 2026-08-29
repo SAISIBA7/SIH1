@@ -2,11 +2,16 @@
 import { mockAlerts } from "../data/farmers.mock";
 import { Bell } from "lucide-react";
 import { motion } from "framer-motion";
+import { useLanguage } from "@/lib/language-context";
 
 export default function AlertPanel() {
+  const { t } = useLanguage();
+
   return (
     <section className="glass p-6">
-      <h3 className="text-lg font-bold text-[#1A1A1A] mb-4">Alerts & System Feeds</h3>
+      <h3 className="text-lg font-bold text-[#1A1A1A] mb-4">
+        {t('live_distress_alerts', 'Alerts & System Feeds')}
+      </h3>
       <ul className="space-y-2.5">
         {mockAlerts.map((alert) => (
           <motion.li

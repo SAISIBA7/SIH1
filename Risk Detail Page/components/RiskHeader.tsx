@@ -1,6 +1,8 @@
 import React from 'react';
 import Link from 'next/link';
 import { ArrowLeft, ShieldAlert, Sparkles } from 'lucide-react';
+import LanguageSelector from '@/components/LanguageSelector';
+import { useLanguage } from '@/lib/language-context';
 
 interface RiskHeaderProps {
   overallScore: number;
@@ -8,19 +10,22 @@ interface RiskHeaderProps {
 }
 
 export default function RiskHeader({ overallScore, cropName = 'Paddy (Swarna MTU 7029)' }: RiskHeaderProps) {
+  const { t } = useLanguage();
+
   return (
     <div className="space-y-6">
       {/* Top Navigation & Status Bar */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between relative z-[999] overflow-visible">
         <Link 
           href="/dashboard" 
           className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white/60 hover:bg-white/90 backdrop-blur-xl border border-white/80 shadow-[0_8px_30px_rgb(0,0,0,0.06)] text-sm font-semibold text-emerald-950 hover:text-emerald-900 transition-all transform hover:-translate-y-0.5"
         >
           <ArrowLeft className="w-4 h-4 text-emerald-700" />
-          <span>Back to Dashboard</span>
+          <span>{t('back', 'Back to Dashboard')}</span>
         </Link>
-        <div className="flex items-center gap-2">
-          <span className="px-4 py-1.5 rounded-full text-xs font-bold bg-white/70 backdrop-blur-xl text-emerald-900 border border-emerald-500/30 shadow-sm flex items-center gap-2">
+        <div className="flex items-center gap-3">
+          <LanguageSelector variant="glass" />
+          <span className="px-4 py-1.5 rounded-full text-xs font-bold bg-white/70 backdrop-blur-xl text-emerald-900 border border-emerald-500/30 shadow-sm hidden sm:flex items-center gap-2">
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping"></span>
             <span className="w-2 h-2 rounded-full bg-emerald-600 -ml-3.5"></span>
             Live Field Telemetry: Active

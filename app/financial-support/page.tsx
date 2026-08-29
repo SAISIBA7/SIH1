@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import FinancialSupportListPage from "@/Financial Support/list/FinancialSupportListPage";
 
 export const metadata = {

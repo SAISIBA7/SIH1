@@ -1,13 +1,17 @@
 "use client";
 
 import { Search, Bell, Menu } from "lucide-react";
+import LanguageSelector from "@/components/LanguageSelector";
+import { useLanguage } from "@/lib/language-context";
 
 export default function Header({ onToggleSidebar }: { onToggleSidebar: () => void }) {
+  const { t } = useLanguage();
+
   return (
-    <header className="glass flex items-center justify-between px-6 py-4 text-[#1A1A1A]">
+    <header className="glass relative z-[999] overflow-visible flex items-center justify-between px-6 py-4 text-[#1A1A1A]">
       {/* Left side: burger menu on mobile */}
       <button
-        className="md:hidden p-2 rounded-md hover:bg-white/40 transition-colors"
+        className="md:hidden p-2 rounded-md hover:bg-white/40 transition-colors cursor-pointer"
         onClick={onToggleSidebar}
       >
         <Menu className="w-5 h-5" />
@@ -15,16 +19,23 @@ export default function Header({ onToggleSidebar }: { onToggleSidebar: () => voi
 
       {/* Title */}
       <div className="flex flex-col items-center md:items-start">
-        <h1 className="text-xl font-bold tracking-tight text-[#1A1A1A]">Agricultural Distress Command Center</h1>
-        <span className="text-xs font-medium text-[#6B6B66]">Mayurbhanj District</span>
+        <h1 className="text-xl font-bold tracking-tight text-[#1A1A1A]">
+          {t('distress_command', 'Agricultural Distress Command Center')}
+        </h1>
+        <span className="text-xs font-medium text-[#6B6B66]">
+          {t('mayurbhanj_district', 'Mayurbhanj District, Odisha')}
+        </span>
       </div>
 
       {/* Right side: actions */}
       <div className="flex items-center gap-3">
-        <button className="p-2.5 rounded-full hover:bg-white/40 text-[#1A1A1A] transition-colors">
+        {/* Language Selector */}
+        <LanguageSelector variant="glass" />
+
+        <button className="p-2.5 rounded-full hover:bg-white/40 text-[#1A1A1A] transition-colors cursor-pointer">
           <Search className="w-5 h-5" />
         </button>
-        <button className="relative p-2.5 rounded-full hover:bg-white/40 text-[#1A1A1A] transition-colors">
+        <button className="relative p-2.5 rounded-full hover:bg-white/40 text-[#1A1A1A] transition-colors cursor-pointer">
           <Bell className="w-5 h-5" />
           <span className="absolute top-1.5 right-1.5 flex h-2 w-2">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
@@ -35,7 +46,7 @@ export default function Header({ onToggleSidebar }: { onToggleSidebar: () => voi
           <div className="w-8 h-8 rounded-full bg-[#1A1A1A] text-white flex items-center justify-center text-xs font-bold">
             AO
           </div>
-          <span className="text-sm font-semibold text-[#1A1A1A]">Officer Name</span>
+          <span className="text-sm font-semibold text-[#1A1A1A]">Officer Portal</span>
         </div>
       </div>
     </header>

@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import HighRiskFarmersView from "@/components/officer/HighRiskFarmersView";
 
 export const metadata = {

@@ -38,11 +38,11 @@ export async function GET(
       );
     }
 
-    // ---- 3. ALL facilities for the bank (tenure included for card display) ----
+    // ---- 3. ALL non-deleted facilities for the bank (tenure included for card display) ----
     const sql = `SELECT id, facility_name, facility_type, status, minimum_amount, maximum_amount,
                         interest_rate, tenure, created_at, updated_at
                  FROM financial_facilities
-                 WHERE bank_id = ?${statusFilter ? ' AND status = ?' : ''}
+                 WHERE bank_id = ? AND status != 'deleted'${statusFilter ? ' AND status = ?' : ''}
                  ORDER BY updated_at DESC`;
     const rows = await query<Record<string, any>[]>(
       sql,

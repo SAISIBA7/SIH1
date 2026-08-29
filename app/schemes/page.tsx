@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import GovernmentSchemesPage from "@/Government equipment schemes/index";
 
 export const metadata = {

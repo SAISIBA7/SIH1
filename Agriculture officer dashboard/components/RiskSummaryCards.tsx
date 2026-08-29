@@ -3,13 +3,16 @@
 import { riskCounts } from "../data/farmers.mock";
 import { motion } from "framer-motion";
 import { AlertTriangle, AlertCircle, CheckCircle, Users } from "lucide-react";
+import { useLanguage } from "@/lib/language-context";
 
 export default function RiskSummaryCards() {
+  const { t } = useLanguage();
+
   const cards = [
-    { label: "High Risk Farmers", value: riskCounts.high, variant: "focus", icon: AlertTriangle, iconColor: "text-red-400" },
-    { label: "Medium Risk Farmers", value: riskCounts.medium, variant: "glass", icon: AlertCircle, iconColor: "text-amber-500" },
-    { label: "Low Risk Farmers", value: riskCounts.low, variant: "glass", icon: CheckCircle, iconColor: "text-emerald-500" },
-    { label: "Total Farmers Monitored", value: riskCounts.total, variant: "glass", icon: Users, iconColor: "text-[#1A1A1A]" },
+    { key: "high_risk_farmers", defaultLabel: "High Risk Farmers", value: riskCounts.high, variant: "focus", icon: AlertTriangle, iconColor: "text-red-400" },
+    { key: "medium_risk_farmers", defaultLabel: "Medium Risk Farmers", value: riskCounts.medium, variant: "glass", icon: AlertCircle, iconColor: "text-amber-500" },
+    { key: "low_risk_farmers", defaultLabel: "Low Risk Farmers", value: riskCounts.low, variant: "glass", icon: CheckCircle, iconColor: "text-emerald-500" },
+    { key: "total_farmers_monitored", defaultLabel: "Total Farmers Monitored", value: riskCounts.total, variant: "glass", icon: Users, iconColor: "text-[#1A1A1A]" },
   ];
 
   return (
@@ -17,9 +20,10 @@ export default function RiskSummaryCards() {
       {cards.map((c) => {
         const isFocus = c.variant === "focus";
         const Icon = c.icon;
+        const translatedLabel = t(c.key, c.defaultLabel);
         return (
           <motion.div
-            key={c.label}
+            key={c.key}
             className={`p-5 flex flex-col items-start justify-between ${isFocus ? "focus-card" : "glass"
               }`}
             whileHover={{ y: -4 }}
@@ -27,7 +31,7 @@ export default function RiskSummaryCards() {
           >
             <div className="flex items-center justify-between w-full mb-3">
               <span className={`text-xs font-semibold uppercase tracking-wider ${isFocus ? "text-gray-400" : "text-[#6B6B66]"}`}>
-                {c.label}
+                {translatedLabel}
               </span>
               <Icon className={`w-5 h-5 ${c.iconColor}`} />
             </div>

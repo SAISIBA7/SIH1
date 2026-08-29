@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   User,
   MapPin,
@@ -25,6 +26,7 @@ import {
   Store,
   Check
 } from "lucide-react";
+import FarmerTaskManager from "@/farmer profile/FarmerTaskManager";
 
 export default function FarmerProfilePage() {
   // Master Farmer State (following PRD specs & mock data)
@@ -62,15 +64,21 @@ export default function FarmerProfilePage() {
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [expandedFarm, setExpandedFarm] = useState<string | null>(null);
+  const router = useRouter();
 
   // Load from DB API on mount
   React.useEffect(() => {
+    setMounted(true);
     async function loadFarmerProfile() {
       try {
-        const res = await fetch('/api/farmers');
-        const json = await res.json();
-        if (json?.data && Array.isArray(json.data) && json.data.length > 0) {
-          const f = json.data[0];
+        const res = await fetch('/api/farmer/FARMER-001');
+        const f = await res.json();
+        
+        if (f && !f.error) {
           setFarmer(prev => ({
             ...prev,
             name: f.name || prev.name,
@@ -79,9 +87,17 @@ export default function FarmerProfilePage() {
             village: f.village || prev.village,
             district: f.district || prev.district,
             language: f.language || prev.language,
-            landArea: `${f.land_area || 2.5} acres`,
-            loanAmount: f.loan_amount ? `₹${Number(f.loan_amount).toLocaleString('en-IN')}` : prev.loanAmount,
-            loanDueDate: f.loan_due_date || prev.loanDueDate,
+            landArea: f.landArea ? `${f.landArea} acres` : prev.landArea,
+            loanAmount: f.loans && f.loans.length > 0 ? `₹${Number(f.loans[0].loanAmount).toLocaleString('en-IN')}` : prev.loanAmount,
+            loanDueDate: f.loans && f.loans.length > 0 ? new Date(f.loans[0].dueDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }) : prev.loanDueDate,
+            farms: f.farms ? f.farms.map((farm: any) => ({
+              id: farm.id,
+              name: farm.name,
+              area: `${farm.area} acres`,
+              location: `${farm.village}, ${farm.district}`,
+              crop: farm.crops && farm.crops.length > 0 ? farm.crops[0].name : "None",
+              status: "Active"
+            })) : prev.farms
           }));
         }
       } catch (e) {
@@ -126,8 +142,10 @@ export default function FarmerProfilePage() {
         [key]: !prev.notifications[key]
       }
     }));
-    showToast("Preferences updated");
+    showToast("Farm parcel successfully registered!");
   };
+
+  if (!mounted) return null;
 
   const handleAddFarm = async () => {
     const newFarm = {
@@ -235,7 +253,7 @@ export default function FarmerProfilePage() {
 
         {/* TOP NAVBAR (Exact match to Hecta aesthetic from reference image) */}
         <header className="w-full bg-white/75 backdrop-blur-xl border border-white/60 shadow-[0_8px_32px_rgba(0,0,0,0.06)] rounded-full px-5 py-3.5 mb-6 flex items-center justify-between transition-all">
-          <Link href="/" className="flex items-center gap-3 hover:opacity-90 transition">
+          <Link href="/dashboard" className="flex items-center gap-3 hover:opacity-90 transition">
             <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#1f3d2b] to-[#2f6b3c] flex items-center justify-center text-[#d8e678] shadow-md shadow-emerald-950/20">
               <Sprout className="w-5 h-5" />
             </div>
@@ -247,7 +265,7 @@ export default function FarmerProfilePage() {
 
           <nav className="hidden md:flex items-center gap-1 bg-black/5 p-1 rounded-full border border-black/5 text-xs font-medium">
             <Link
-              href="/"
+              href="/crop-monitoring"
               className="px-4 py-1.5 rounded-full transition-all duration-200 flex items-center gap-1.5 text-[#3f5245] hover:text-black hover:bg-white/50"
             >
               Crop Monitor
@@ -274,10 +292,67 @@ export default function FarmerProfilePage() {
           </nav>
 
           <div className="flex items-center gap-2 sm:gap-3">
-            <button className="w-9 h-9 rounded-full bg-white/90 hover:bg-white border border-black/5 flex items-center justify-center text-gray-700 shadow-sm transition hover:scale-105">
-              <Search className="w-4 h-4" />
-            </button>
-            <button className="w-9 h-9 rounded-full bg-white/90 hover:bg-white border border-black/5 flex items-center justify-center text-gray-700 shadow-sm transition hover:scale-105 relative">
+            {/* Search Button + Dropdown */}
+            <div className="relative">
+              <button
+                onClick={() => setSearchOpen(o => !o)}
+                className="w-9 h-9 rounded-full bg-white/90 hover:bg-white border border-black/5 flex items-center justify-center text-gray-700 shadow-sm transition hover:scale-105"
+              >
+                <Search className="w-4 h-4" />
+              </button>
+              {searchOpen && (
+                <div className="absolute right-0 top-11 w-64 bg-white/95 backdrop-blur-xl border border-black/10 rounded-2xl shadow-xl p-3 z-50">
+                  <div className="flex items-center gap-2 border-b border-black/5 pb-2">
+                    <Search className="w-4 h-4 text-gray-400 shrink-0" />
+                    <input
+                      autoFocus
+                      type="text"
+                      placeholder="Search farms, crops..."
+                      value={searchQuery}
+                      onChange={e => setSearchQuery(e.target.value)}
+                      className="flex-1 text-sm outline-none bg-transparent placeholder:text-gray-400 text-[#1e2a22]"
+                    />
+                    {searchQuery && (
+                      <button onClick={() => setSearchQuery("")} className="text-gray-400 hover:text-black">
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+                  <div className="mt-2 space-y-1">
+                    {farmer.farms
+                      .filter(f =>
+                        !searchQuery ||
+                        f.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                        f.crop.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                        f.location.toLowerCase().includes(searchQuery.toLowerCase())
+                      )
+                      .map(f => (
+                        <button
+                          key={f.id}
+                          onClick={() => { setExpandedFarm(f.id); setSearchOpen(false); setSearchQuery(""); }}
+                          className="w-full text-left px-2 py-1.5 rounded-xl hover:bg-black/5 transition"
+                        >
+                          <p className="text-xs font-semibold text-[#1e2a22]">{f.name}</p>
+                          <p className="text-[11px] text-gray-500">{f.crop} · {f.location}</p>
+                        </button>
+                      ))
+                    }
+                    {searchQuery && farmer.farms.filter(f =>
+                      f.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                      f.crop.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                      f.location.toLowerCase().includes(searchQuery.toLowerCase())
+                    ).length === 0 && (
+                      <p className="text-xs text-gray-400 px-2 py-1">No farms found</p>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+            {/* Bell → Notifications Page */}
+            <button
+              onClick={() => router.push('/notifications')}
+              className="w-9 h-9 rounded-full bg-white/90 hover:bg-white border border-black/5 flex items-center justify-center text-gray-700 shadow-sm transition hover:scale-105 relative"
+            >
               <Bell className="w-4 h-4" />
               <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#d8e678] border border-black/20 rounded-full" />
             </button>
@@ -485,27 +560,57 @@ export default function FarmerProfilePage() {
 
               <div className="space-y-3">
                 {farmer.farms.map((farm, idx) => (
-                  <div
-                    key={farm.id}
-                    className="p-4 rounded-2xl bg-white/70 hover:bg-white border border-black/5 shadow-sm transition flex items-center justify-between group"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-[#f2f6ee] text-[#1f3d2b] flex items-center justify-center font-bold text-sm border border-black/5">
-                        0{idx + 1}
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <h4 className="font-bold text-sm text-[#1e2a22]">{farm.name}</h4>
-                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-semibold">
-                            {farm.area}
-                          </span>
+                  <div key={farm.id} className="rounded-2xl bg-white/70 border border-black/5 shadow-sm overflow-hidden transition-all">
+                    {/* Clickable header row */}
+                    <button
+                      onClick={() => setExpandedFarm(expandedFarm === farm.id ? null : farm.id)}
+                      className="w-full p-4 flex items-center justify-between group hover:bg-white transition text-left"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-[#f2f6ee] text-[#1f3d2b] flex items-center justify-center font-bold text-sm border border-black/5">
+                          0{idx + 1}
                         </div>
-                        <p className="text-xs text-[#7a8b6f] mt-0.5 flex items-center gap-1">
-                          <MapPin className="w-3 h-3" /> {farm.location} • <span className="text-[#2f6b3c] font-medium">{farm.crop}</span>
-                        </p>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <h4 className="font-bold text-sm text-[#1e2a22]">{farm.name}</h4>
+                            <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-semibold">
+                              {farm.area}
+                            </span>
+                          </div>
+                          <p className="text-xs text-[#7a8b6f] mt-0.5 flex items-center gap-1">
+                            <MapPin className="w-3 h-3" /> {farm.location} • <span className="text-[#2f6b3c] font-medium">{farm.crop}</span>
+                          </p>
+                        </div>
                       </div>
-                    </div>
-                    <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-black transition" />
+                      <ChevronRight
+                        className={`w-4 h-4 transition-transform duration-300 ${expandedFarm === farm.id ? 'rotate-90 text-[#2f6b3c]' : 'text-gray-400 group-hover:text-black'}`}
+                      />
+                    </button>
+                    {/* Expanded details panel */}
+                    {expandedFarm === farm.id && (
+                      <div className="px-4 pb-4 pt-1 border-t border-black/5 grid grid-cols-2 sm:grid-cols-3 gap-3 animate-in slide-in-from-top-2 duration-200">
+                        <div className="p-3 bg-[#f2f6ee] rounded-xl">
+                          <p className="text-[11px] text-[#7a8b6f] mb-0.5">Total Area</p>
+                          <p className="text-sm font-bold text-[#1e2a22]">{farm.area}</p>
+                        </div>
+                        <div className="p-3 bg-[#f2f6ee] rounded-xl">
+                          <p className="text-[11px] text-[#7a8b6f] mb-0.5">Current Crop</p>
+                          <p className="text-sm font-bold text-[#2f6b3c]">{farm.crop}</p>
+                        </div>
+                        <div className="p-3 bg-[#f2f6ee] rounded-xl">
+                          <p className="text-[11px] text-[#7a8b6f] mb-0.5">Location</p>
+                          <p className="text-sm font-bold text-[#1e2a22]">{farm.location}</p>
+                        </div>
+                        <div className="p-3 bg-[#f2f6ee] rounded-xl">
+                          <p className="text-[11px] text-[#7a8b6f] mb-0.5">Status</p>
+                          <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">{farm.status}</span>
+                        </div>
+                        <div className="col-span-2 p-3 bg-[#fffbea] rounded-xl border border-yellow-100">
+                          <p className="text-[11px] text-[#7a8b6f] mb-0.5">Farm ID</p>
+                          <p className="text-xs font-mono text-[#1e2a22]">FARM-{farm.id.toString().padStart(4, "0")}</p>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -569,16 +674,21 @@ export default function FarmerProfilePage() {
               </div>
 
               <div className="bg-gradient-to-r from-[#f7f9f4] to-[#eef4ea] p-4 rounded-2xl border border-[#d2e3ca] mb-4">
+                {/* CURRENT label — PRD §15 */}
+                <div className="inline-flex items-center gap-1.5 mb-2 px-2 py-0.5 rounded-full bg-emerald-700/10 border border-emerald-700/20">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse" />
+                  <span className="text-[10px] font-extrabold text-emerald-800 uppercase tracking-wider">Current — Kharif 2026</span>
+                </div>
                 <div className="flex justify-between items-start">
                   <div>
                     <h3 className="text-lg font-extrabold text-[#16271c]">{farmer.currentCrop} (Swarna Sub-1)</h3>
-                    <p className="text-xs text-[#526a57] mt-0.5">Sown: {farmer.sowingDate} • Stage: {farmer.cropStage}</p>
+                    <p className="text-xs text-[#526a57] mt-0.5">Farm 01 • Sown: {farmer.sowingDate} • Stage: {farmer.cropStage}</p>
                   </div>
                   <button
-                    onClick={() => showToast("Navigating to detailed Crop Diagnostic Guide...")}
+                    onClick={() => router.push('/crop-details')}
                     className="px-3 py-1.5 bg-[#1c2e22] text-[#d8e678] text-xs font-semibold rounded-xl flex items-center gap-1 hover:bg-black transition shadow-sm"
                   >
-                    <span>View Guide</span>
+                    <span>View Crop</span>
                     <ExternalLink className="w-3 h-3" />
                   </button>
                 </div>
@@ -632,6 +742,43 @@ export default function FarmerProfilePage() {
                     <CheckCircle2 className="w-3 h-3" /> Advisory Support Eligible
                   </span>
                 </div>
+              </div>
+            </div>
+
+            {/* 5.5 INSURANCE SUMMARY — PRD §17 */}
+            <div className="bg-white/80 backdrop-blur-xl border border-white/90 rounded-3xl p-6 shadow-[0_8px_30px_rgba(0,0,0,0.04)]">
+              <div className="flex items-center justify-between pb-4 mb-4 border-b border-black/5">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-lg bg-emerald-100/50 text-emerald-900 flex items-center justify-center">
+                    <ShieldCheck className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h2 className="text-base font-bold text-[#16271c]">Insurance</h2>
+                    <p className="text-xs text-[#7a8b6f]">Current protection status</p>
+                  </div>
+                </div>
+                <span className="text-[10px] font-extrabold uppercase px-2 py-1 rounded-full bg-amber-100 text-amber-800 border border-amber-200" aria-label="Insurance status: Not Registered">Not Registered</span>
+              </div>
+
+              <div className="space-y-2 text-xs">
+                <div className="flex justify-between items-center py-2 border-b border-black/5">
+                  <span className="text-[#7a8b6f]">Crop</span>
+                  <span className="font-bold text-[#16271c]">{farmer.currentCrop}</span>
+                </div>
+                <div className="flex justify-between items-center py-2 border-b border-black/5">
+                  <span className="text-[#7a8b6f]">Farm</span>
+                  <span className="font-bold text-[#16271c]">{farmer.farms[0]?.name ?? 'Farm 01'}</span>
+                </div>
+                <div className="flex justify-between items-center py-2">
+                  <span className="text-[#7a8b6f]">Area</span>
+                  <span className="font-bold text-[#16271c]">{farmer.landArea}</span>
+                </div>
+              </div>
+              <div className="pt-4 flex flex-col gap-2">
+                <p className="text-[11px] text-center text-[#5a7260]">You may be eligible for crop insurance.</p>
+                <Link href="/insurance" className="w-full text-center px-4 py-2.5 bg-[#1c2e22] text-[#d8e678] font-bold text-xs rounded-xl shadow-sm hover:bg-[#2a4533] transition">
+                  View Insurance →
+                </Link>
               </div>
             </div>
 
@@ -706,9 +853,11 @@ export default function FarmerProfilePage() {
                         <span className="font-semibold text-[#1e2a22] block">{item.title}</span>
                         <span className="text-[11px] text-[#7a8b6f]">{item.desc}</span>
                       </div>
-                      <div className={`w-10 h-6 flex items-center rounded-full p-1 transition-colors ${enabled ? "bg-[#2f6b3c]" : "bg-gray-300"}`}>
+                      {/* Accessible toggle — PRD §19: not color-alone */}
+                      <div className={`w-10 h-6 flex items-center rounded-full p-1 transition-colors ${enabled ? "bg-[#2f6b3c]" : "bg-gray-300"}`} role="switch" aria-checked={enabled} aria-label={item.title}>
                         <div className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform ${enabled ? "translate-x-4" : "translate-x-0"}`} />
                       </div>
+                      <span className={`text-[10px] font-bold ml-1 w-6 text-center ${enabled ? 'text-emerald-700' : 'text-gray-400'}`}>{enabled ? 'ON' : 'OFF'}</span>
                     </div>
                   );
                 })}
@@ -839,11 +988,11 @@ export default function FarmerProfilePage() {
 
       {/* MOBILE BOTTOM NAVIGATION BAR */}
       <div className="fixed bottom-0 inset-x-0 bg-white/90 backdrop-blur-xl border-t border-black/10 py-2 px-6 flex justify-around items-center z-40 md:hidden shadow-lg">
-        <Link href="/" className="flex flex-col items-center gap-1 text-gray-500 hover:text-[#1f3d2b]">
+        <Link href="/dashboard" className="flex flex-col items-center gap-1 text-gray-500 hover:text-[#1f3d2b]">
           <Home className="w-5 h-5" />
           <span className="text-[10px] font-medium">Home</span>
         </Link>
-        <Link href="/" className="flex flex-col items-center gap-1 text-gray-500 hover:text-[#1f3d2b]">
+        <Link href="/crop-monitoring" className="flex flex-col items-center gap-1 text-gray-500 hover:text-[#1f3d2b]">
           <Sprout className="w-5 h-5" />
           <span className="text-[10px] font-medium">Crop</span>
         </Link>

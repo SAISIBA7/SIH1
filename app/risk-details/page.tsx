@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import RiskDetailsPage from "@/Risk Detail Page/Risk Detail Page";
 
 export const metadata = {

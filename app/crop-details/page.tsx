@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import CropDetailsPage from "@/Crop Details/Crop Details";
 
 export const metadata = {

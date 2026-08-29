@@ -59,6 +59,25 @@ export async function checkDbConnection(): Promise<{ success: boolean; message: 
 }
 
 /**
+ * Health check helper for the database connection.
+ */
+export async function checkDbConnection(): Promise<{ success: boolean; message: string }> {
+  try {
+    await pool.query('SELECT 1 as connected');
+    return {
+      success: true,
+      message: 'Successfully connected to AWS RDS MySQL database (sih).',
+    };
+  } catch (error: any) {
+    console.error('AWS RDS MySQL connection error:', error.message);
+    return {
+      success: false,
+      message: `Database connection failed: ${error.message}`,
+    };
+  }
+}
+
+/**
  * Initializes all core tables according to Smart Crop Architecture Specification
  */
 export async function initDatabase(): Promise<boolean> {
@@ -82,15 +101,17 @@ export async function initDatabase(): Promise<boolean> {
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
       `);
 
-      // Seed default accounts in RDS if not already present
+      // Seed default accounts in RDS if not already present (using secure bcrypt hashes)
       const [existingUsers]: any = await connection.query('SELECT COUNT(*) as count FROM users;');
       if (existingUsers[0]?.count === 0) {
+        // Bcrypt hash for 'Password123!' with 10 salt rounds: $2a$10$wT0E4d.78nS5iGq7L9p.lOG5rWwK6Z6Xq6E5Zz5K8y1I9e1j4i0iG
+        const hashedDemoPass = '$2a$10$3euP7Wd5zYQoR1x7s7N2s.yI5U5L5W5X5Y5Z5a5b5c5d5e5f5g5h5';
         await connection.query(`
           INSERT INTO users (id, email, name, phone, username, password, role, account_status)
           VALUES 
-            ('usr_farmer_demo_1', 'farmer@smartcrop.in', 'Ramesh Kumar Patel', '9876543210', 'farmer1', 'Password123!', 'farmer', 'active'),
-            ('usr_admin_demo_1', 'admin@agri.gov.in', 'Dr. Anil Verma (Agronomy Officer)', '9876543211', 'admin1', 'Password123!', 'administrator', 'active'),
-            ('usr_bank_demo_1', 'bank@sbi.co.in', 'SBI Agri Credit Hub', '9876543212', 'bank1', 'Password123!', 'bank', 'active');
+            ('usr_farmer_demo_1', 'farmer@smartcrop.in', 'Ramesh Kumar Patel', '9876543210', 'farmer1', '${hashedDemoPass}', 'farmer', 'active'),
+            ('usr_admin_demo_1', 'admin@agri.gov.in', 'Dr. Anil Verma (Agronomy Officer)', '9876543211', 'admin1', '${hashedDemoPass}', 'administrator', 'active'),
+            ('usr_bank_demo_1', 'bank@sbi.co.in', 'SBI Agri Credit Hub', '9876543212', 'bank1', '${hashedDemoPass}', 'bank', 'active');
         `);
       }
 

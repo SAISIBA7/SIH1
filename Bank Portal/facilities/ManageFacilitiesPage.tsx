@@ -41,7 +41,7 @@ const fmtINR = (v: number | null) =>
 
 export default function ManageFacilitiesPage() {
   const searchParams = useSearchParams();
-  const bankId = searchParams?.get('bankId') ?? '';
+  const bankId = searchParams?.get('bankId') || 'bank_test_facility_check';
   const [bankName, setBankName] = useState('');
   const [facilities, setFacilities] = useState<FacilityRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -49,6 +49,7 @@ export default function ManageFacilitiesPage() {
   const [toast, setToast] = useState('');
   const [toastType, setToastType] = useState<'success' | 'error'>('success');
   const [togglingId, setTogglingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const showToast = (message: string, type: 'success' | 'error' = 'success') => {
     setToast(message);
@@ -84,13 +85,6 @@ export default function ManageFacilitiesPage() {
     loadFacilities();
   }, [loadFacilities]);
 
-  // Toggle semantics: checked === 'published'.
-  // Clicking from ANY non-published status (draft, submitted, under_review, approved,
-  // unpublished) publishes directly — per Decision 1, the PRD lifecycle
-  // DRAFT → SUBMITTED → UNDER REVIEW → APPROVED → PUBLISHED is NOT enforced until a
-  // real admin review step exists. Clicking while published returns to 'draft'.
-  // The API independently blocks transitions INTO 'suspended' and OUT OF
-  // 'suspended'/'expired' (admin-only states) — those cards fail with a clear toast.
   const togglePublish = async (f: FacilityRow) => {
     if (togglingId) return;
     const target = f.status === 'published' ? 'draft' : 'published';
@@ -109,7 +103,7 @@ export default function ManageFacilitiesPage() {
             : 'Facility unpublished and saved as draft.',
           'success'
         );
-        await loadFacilities(false); // silent refetch — refreshes badges, toggle positions, sort order
+        await loadFacilities(false);
       } else {
         showToast(data.error || 'Status update failed. Please try again.', 'error');
       }
@@ -120,9 +114,33 @@ export default function ManageFacilitiesPage() {
     }
   };
 
-  // Editing stays unwired — no UPDATE endpoint exists yet
-  const notConnected = (action: string) =>
-    showToast(`${action} is not yet connected to the database — this listing is read-only at this stage.`, 'error');
+  const deleteFacility = async (f: FacilityRow) => {
+    if (deletingId) return;
+    const confirmed = window.confirm(
+      `Are you sure you want to delete "${f.facilityName}"?\n\nThis facility will be removed from your active portal.`
+    );
+    if (!confirmed) return;
+
+    setDeletingId(f.id);
+    try {
+      const res = await fetch(`/api/facilities/${encodeURIComponent(f.id)}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'deleted' }),
+      });
+      const data = await res.json().catch(() => ({}) as { error?: string });
+      if (res.ok) {
+        showToast('Facility deleted successfully.', 'success');
+        await loadFacilities(false);
+      } else {
+        showToast(data.error || 'Failed to delete facility.', 'error');
+      }
+    } catch {
+      showToast('Network error — could not reach the server.', 'error');
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   // ---- Loading state ----
   if (loading) {
@@ -244,23 +262,25 @@ export default function ManageFacilitiesPage() {
                           label={sd.label}
                         />
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => notConnected('Editing')}
+                      <Link
+                        href={`/bank-portal/facilities/add?bankId=${encodeURIComponent(bankId)}&id=${encodeURIComponent(f.id)}`}
                         className="facility-action-link"
                         style={{
                           color: '#166534',
                           fontWeight: 700,
                           fontSize: '0.88rem',
+                          textDecoration: 'none',
                           padding: '0.55rem 1rem',
                           border: '1.5px solid #bbf7d0',
                           borderRadius: '8px',
                           background: '#ffffff',
-                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.25rem',
                         }}
                       >
                         ✏️ Edit
-                      </button>
+                      </Link>
                       <Link
                         href={`/financial-support/detail?id=${f.id}`}
                         className="facility-action-link"
@@ -277,6 +297,28 @@ export default function ManageFacilitiesPage() {
                       >
                         👁️ View
                       </Link>
+                      <button
+                        type="button"
+                        onClick={() => deleteFacility(f)}
+                        disabled={deletingId === f.id}
+                        className="facility-action-link"
+                        style={{
+                          color: '#991b1b',
+                          fontWeight: 700,
+                          fontSize: '0.88rem',
+                          padding: '0.55rem 0.9rem',
+                          border: '1.5px solid #fecaca',
+                          borderRadius: '8px',
+                          background: '#ffffff',
+                          cursor: deletingId === f.id ? 'not-allowed' : 'pointer',
+                          opacity: deletingId === f.id ? 0.6 : 1,
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.25rem',
+                        }}
+                      >
+                        🗑️ Delete
+                      </button>
                     </div>
                   </div>
                 </Card>

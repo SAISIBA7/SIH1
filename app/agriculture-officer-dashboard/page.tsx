@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import OfficerDashboardPage from "@/Agriculture officer dashboard/Agriculture officer dashboard";
 
 export const metadata = {

@@ -1,4 +1,4 @@
-import SchemeDetailsPage from "@/Government equipment schemes/SchemeDetails";
+import { redirect } from "next/navigation";
 
 export const metadata = {
   title: "Smart Crop | Scheme Application & Subsidy Roadmap",
