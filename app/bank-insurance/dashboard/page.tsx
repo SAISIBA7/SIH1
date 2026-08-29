@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import BankInsuranceDashboardView from "@/components/bank-insurance/BankInsuranceDashboardView";
 
 export const metadata = {

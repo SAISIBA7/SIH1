@@ -1,24 +1,30 @@
+<<<<<<< HEAD
 import mysql from 'mysql2/promise';
 
 declare global {
   // eslint-disable-next-line no-var
   var mysqlPool: mysql.Pool | undefined;
+=======
+import mysql, { Pool } from 'mysql2/promise';
+
+declare global {
+  var _mysqlPool: Pool | undefined;
+>>>>>>> a4c6f303edae7e76a4c00959523468272a63f96a
 }
 
 const dbConfig = {
   host: process.env.DB_HOST || 'sih-mysql.cley86o8g8vx.eu-north-1.rds.amazonaws.com',
   port: Number(process.env.DB_PORT) || 3306,
   user: process.env.DB_USER || 'admin',
-  password: process.env.DB_PASSWORD || 'kFjzqqPYEQb2awh',
+<<<<<<< HEAD
+  // No hardcoded fallback — a missing DB_PASSWORD must fail loudly with an auth
+  // error rather than silently trying a stale credential.
+  password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME || 'sih',
   waitForConnections: true,
   connectionLimit: 10,
-  maxIdle: 10,
-  idleTimeout: 60000,
   queueLimit: 0,
-  enableKeepAlive: true,
-  keepAliveInitialDelay: 10000,
-  connectTimeout: 20000,
+  connectTimeout: 10000,
   ssl: {
     rejectUnauthorized: false,
   },
@@ -34,6 +40,62 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 /**
+ * Helper to execute parameterized SQL queries against AWS RDS MySQL.
+ */
+export async function query<T = any>(sql: string, values?: any[]): Promise<T> {
+  const [rows] = await pool.query(sql, values);
+  return rows as T;
+}
+
+/**
+ * Health check helper for the database connection.
+ */
+export async function checkDbConnection(): Promise<{ success: boolean; message: string }> {
+  try {
+    const [rows] = await pool.query('SELECT 1 as connected');
+    return {
+      success: true,
+      message: 'Successfully connected to AWS RDS MySQL database (sih).',
+    };
+  } catch (error: any) {
+    console.error('AWS RDS MySQL connection error:', error.message);
+    return {
+      success: false,
+      message: `Database connection failed: ${error.message}`,
+    };
+=======
+  password: process.env.DB_PASSWORD || 'kFjzqqPYEQb2awh',
+  database: process.env.DB_NAME || 'sih',
+  waitForConnections: true,
+  connectionLimit: 10,
+  maxIdle: 10,
+  idleTimeout: 60000,
+  queueLimit: 0,
+  enableKeepAlive: true,
+  keepAliveInitialDelay: 10000,
+  connectTimeout: 20000,
+  ssl: {
+    rejectUnauthorized: false
+  }
+};
+
+export const pool: Pool = global._mysqlPool || mysql.createPool(dbConfig);
+
+if (process.env.NODE_ENV !== 'production') {
+  global._mysqlPool = pool;
+}
+
+export async function query<T = any>(sql: string, params?: any[]): Promise<T> {
+  try {
+    const [rows] = await pool.execute(sql, params);
+    return rows as T;
+  } catch (err: any) {
+    console.error('[Database Query Error]:', err?.message || err);
+    throw err;
+  }
+}
+
+/**
  * Health check helper for the database connection.
  */
 export async function checkDbConnection(): Promise<{ success: boolean; message: string }> {
@@ -44,23 +106,11 @@ export async function checkDbConnection(): Promise<{ success: boolean; message: 
       message: 'Successfully connected to AWS RDS MySQL database (sih).',
     };
   } catch (error: any) {
+    console.error('AWS RDS MySQL connection error:', error.message);
     return {
       success: false,
       message: `Database connection failed: ${error.message}`,
     };
-  }
-}
-
-/**
- * Helper to execute parameterized SQL queries against AWS RDS MySQL.
- */
-export async function query<T = any>(sql: string, params?: any[]): Promise<T> {
-  try {
-    const [rows] = await pool.execute(sql, params);
-    return rows as T;
-  } catch (err: any) {
-    console.error('[Database Query Error]:', err?.message || err);
-    throw err;
   }
 }
 

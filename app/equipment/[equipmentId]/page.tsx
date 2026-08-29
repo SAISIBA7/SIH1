@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import EquipmentDetailView from "@/components/equipment/EquipmentDetailView";
 
 export const metadata = {

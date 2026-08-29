@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import FarmerDashboard from "@/farmer deshboard/deshboard";
 
 export const metadata = {

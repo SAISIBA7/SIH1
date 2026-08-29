@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import FarmerDetailView from "@/components/officer/FarmerDetailView";
 
 export const metadata = {

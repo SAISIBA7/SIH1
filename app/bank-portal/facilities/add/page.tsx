@@ -1,4 +1,3 @@
-import { Suspense } from "react";
 import AddFacilityPage from "@/Bank Portal/facilities/AddFacilityPage";
 
 export const metadata = {
@@ -7,9 +6,5 @@ export const metadata = {
 };
 
 export default function Page() {
-  return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading form...</div>}>
-      <AddFacilityPage />
-    </Suspense>
-  );
+  return <AddFacilityPage />;
 }

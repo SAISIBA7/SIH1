@@ -1,4 +1,4 @@
-import { redirect } from "next/navigation";
+import FarmerDashboard from "@/farmer deshboard/deshboard";
 
 export const metadata = {
   title: "Smart Crop | Authentication",

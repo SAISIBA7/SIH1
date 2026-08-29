@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic';
 import EquipmentPage from "@/Equipment page Dashboard/Equipment page";
 
 export const metadata = {

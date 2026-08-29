@@ -10,14 +10,7 @@ export async function GET(
     if (!farmerId) return NextResponse.json({ error: "Farmer ID required" }, { status: 400 });
 
     const farms = await prisma.farm.findMany({
-      where: { farmerId },
-      include: {
-        crops: {
-          include: {
-            riskScores: true,
-          }
-        }
-      }
+      where: { farmerId }
     });
 
     return NextResponse.json(farms);

@@ -1,4 +1,3 @@
-import { Suspense } from "react";
 import AcknowledgementPage from "@/Financial Support/acknowledgement/AcknowledgementPage";
 
 export const metadata = {
@@ -7,9 +6,5 @@ export const metadata = {
 };
 
 export default function Page() {
-  return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading acknowledgement...</div>}>
-      <AcknowledgementPage />
-    </Suspense>
-  );
+  return <AcknowledgementPage />;
 }

@@ -296,6 +296,7 @@ export default function SmartCropDashboard() {
 
             {/* Notification Bell */}
             <button
+              onClick={() => router.push('/notifications')}
               onMouseEnter={() => setHoveredAction('bell')}
               onMouseLeave={() => setHoveredAction(null)}
               className={`h-11 rounded-full flex items-center justify-center bg-white/80 hover:bg-white border border-black/6 hover:border-black/15 transition-all duration-300 shadow-sm relative cursor-pointer group ${
@@ -325,36 +326,34 @@ export default function SmartCropDashboard() {
             </button>
 
             {/* Profile User */}
-            <Link href="/farmer-profile">
-              <button
-                onMouseEnter={() => setHoveredAction('user')}
-                onMouseLeave={() => setHoveredAction(null)}
-                className={`h-11 rounded-full flex items-center justify-center bg-white/80 hover:bg-white border border-black/6 hover:border-black/15 transition-all duration-300 shadow-sm relative cursor-pointer group ${
-                  hoveredAction === 'user' ? 'px-4' : 'w-11'
-                }`}
+            <button
+              onMouseEnter={() => setHoveredAction('user')}
+              onMouseLeave={() => setHoveredAction(null)}
+              className={`h-11 rounded-full flex items-center justify-center bg-white/80 hover:bg-white border border-black/6 hover:border-black/15 transition-all duration-300 shadow-sm relative cursor-pointer group ${
+                hoveredAction === 'user' ? 'px-4' : 'w-11'
+              }`}
+            >
+              <motion.div
+                animate={{ y: hoveredAction === 'user' ? -2 : 0 }}
+                transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+                className="relative flex items-center justify-center shrink-0"
               >
-                <motion.div
-                  animate={{ y: hoveredAction === 'user' ? -2 : 0 }}
-                  transition={{ type: 'spring', stiffness: 400, damping: 20 }}
-                  className="relative flex items-center justify-center shrink-0"
-                >
-                  <User size={18} className="text-[#1B1E19] group-hover:scale-105 transition-transform" />
-                  <div className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-[#D6F24B] border-2 border-white"></div>
-                </motion.div>
-                <motion.span
-                  initial={false}
-                  animate={{
-                    width: hoveredAction === 'user' ? 'auto' : 0,
-                    opacity: hoveredAction === 'user' ? 1 : 0,
-                    marginLeft: hoveredAction === 'user' ? 6 : 0,
-                  }}
-                  transition={{ type: 'spring', stiffness: 350, damping: 30 }}
-                  className="overflow-hidden whitespace-nowrap text-xs font-semibold text-[#1B1E19]"
-                >
-                  Profile
-                </motion.span>
-              </button>
-            </Link>
+                <User size={18} className="text-[#1B1E19] group-hover:scale-105 transition-transform" />
+                <div className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-[#D6F24B] border-2 border-white"></div>
+              </motion.div>
+              <motion.span
+                initial={false}
+                animate={{
+                  width: hoveredAction === 'user' ? 'auto' : 0,
+                  opacity: hoveredAction === 'user' ? 1 : 0,
+                  marginLeft: hoveredAction === 'user' ? 6 : 0,
+                }}
+                transition={{ type: 'spring', stiffness: 350, damping: 30 }}
+                className="overflow-hidden whitespace-nowrap text-xs font-semibold text-[#1B1E19]"
+              >
+                Profile
+              </motion.span>
+            </button>
           </div>
         </div>
 
