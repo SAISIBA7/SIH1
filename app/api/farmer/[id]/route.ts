@@ -10,7 +10,7 @@ export async function GET(
 
   try {
     // 1. Try Prisma query if available
-    let farmer = await prisma.farmer.findUnique({
+    const farmer = await prisma.farmer.findUnique({
       where: { id },
       include: {
         insurance: true,

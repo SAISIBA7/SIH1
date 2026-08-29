@@ -24,8 +24,10 @@ import {
   X,
   Home,
   Store,
-  Check
+  Check,
+  LogOut
 } from "lucide-react";
+import { smartCropAuth } from "@/lib/smartcrop-auth";
 import FarmerTaskManager from "@/farmer profile/FarmerTaskManager";
 
 export default function FarmerProfilePage() {
@@ -237,6 +239,15 @@ export default function FarmerProfilePage() {
     showToast("Profile details updated and saved to Database!");
   };
 
+  const handleSignOut = async () => {
+    try {
+      await smartCropAuth.signOut();
+    } catch {
+      // ignore
+    }
+    router.push("/authentication");
+  };
+
   return (
     <div className="relative min-h-screen w-full bg-[#e8ece9] text-[#1e2a22] font-sans antialiased overflow-x-hidden selection:bg-[#d8e678] selection:text-black">
       {/* Dynamic Background Image with Theme Tint Overlay */}
@@ -365,6 +376,16 @@ export default function FarmerProfilePage() {
               </div>
               <span className="text-xs font-semibold hidden sm:inline text-[#1f3d2b]">{farmer.name}</span>
             </div>
+
+            {/* Logout Button */}
+            <button
+              onClick={handleSignOut}
+              title="Sign Out to Authentication"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 text-xs font-semibold shadow-sm transition hover:scale-105 cursor-pointer"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Logout</span>
+            </button>
           </div>
         </header>
 
@@ -403,6 +424,14 @@ export default function FarmerProfilePage() {
                 >
                   <Plus className="w-4 h-4 text-[#3b7c4a]" />
                   <span>Add Another Plot / Farm</span>
+                </button>
+
+                <button
+                  onClick={handleSignOut}
+                  className="px-5 py-2.5 rounded-full bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 font-medium text-xs sm:text-sm flex items-center gap-2 shadow-sm transition hover:scale-[1.02] cursor-pointer"
+                >
+                  <LogOut className="w-4 h-4 text-red-600" />
+                  <span>Sign Out</span>
                 </button>
               </div>
             </div>

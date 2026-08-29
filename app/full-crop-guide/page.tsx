@@ -1,4 +1,5 @@
 export const dynamic = 'force-dynamic';
+import { Suspense } from 'react';
 import FullCropGuidePage from "@/Full crop guide/Full crop guide";
 
 export const metadata = {
@@ -7,5 +8,9 @@ export const metadata = {
 };
 
 export default function Page() {
-  return <FullCropGuidePage />;
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading Guide...</div>}>
+      <FullCropGuidePage />
+    </Suspense>
+  );
 }

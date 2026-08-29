@@ -151,12 +151,30 @@ export async function POST(req: NextRequest) {
       role: authenticatedUser.role,
     }, 86400 * 30); // 30 days expiration
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       accessToken,
       refreshToken,
       user: authenticatedUser,
       source: "AWS RDS MySQL"
     }, { status: 200 });
+
+    response.cookies.set('smartcrop_token', accessToken, {
+      path: '/',
+      httpOnly: false,
+      sameSite: 'lax',
+      maxAge: 86400 * 7,
+      secure: process.env.NODE_ENV === 'production',
+    });
+
+    response.cookies.set('smartcrop_session', JSON.stringify(authenticatedUser), {
+      path: '/',
+      httpOnly: false,
+      sameSite: 'lax',
+      maxAge: 86400 * 7,
+      secure: process.env.NODE_ENV === 'production',
+    });
+
+    return response;
 
   } catch (err: any) {
     return NextResponse.json(

@@ -2,15 +2,18 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { 
   Landmark, ShieldCheck, TrendingUp, AlertTriangle, ArrowLeft, 
-  FileText, Users, DollarSign, ExternalLink, Plus
+  FileText, Users, DollarSign, ExternalLink, Plus, LogOut
 } from 'lucide-react';
 import LanguageSelector from '@/components/LanguageSelector';
 import { useLanguage } from '@/lib/language-context';
+import { smartCropAuth } from '@/lib/smartcrop-auth';
 
 export default function BankInsuranceDashboardView() {
   const { t } = useLanguage();
+  const router = useRouter();
   const [data, setData] = useState<any>(null);
 
   useEffect(() => {
@@ -22,9 +25,33 @@ export default function BankInsuranceDashboardView() {
       .catch(console.error);
   }, []);
 
+  const handleSignOut = async () => {
+    try {
+      await smartCropAuth.signOut();
+    } catch {}
+    router.push('/authentication');
+  };
+
   return (
-    <div className="min-h-screen bg-[#F2F2EF] text-[#1A1A1A] p-4 md:p-8 font-sans">
-      <div className="max-w-6xl mx-auto space-y-6">
+    <div className="relative min-h-screen text-[#1A1A1A] p-4 md:p-8 font-sans selection:bg-emerald-500 selection:text-white">
+      {/* ── Fixed background layer from Crop Monitoring ── */}
+      <div
+        className="fixed inset-0 -z-20 block md:hidden bg-cover bg-bottom bg-no-repeat"
+        style={{ backgroundImage: "url('/bg-phone.png')" }}
+        aria-hidden="true"
+      />
+      <div
+        className="fixed inset-0 -z-20 hidden md:block bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: "url('/bg-laptop.png')" }}
+        aria-hidden="true"
+      />
+      <div
+        className="fixed inset-0 -z-10"
+        style={{ background: "rgba(240, 248, 235, 0.84)", backdropFilter: "blur(4px)" }}
+        aria-hidden="true"
+      />
+
+      <div className="max-w-6xl mx-auto space-y-6 relative z-10">
         
         {/* Navigation Top Bar */}
         <div className="flex items-center justify-between relative z-[999] overflow-visible">
@@ -44,6 +71,14 @@ export default function BankInsuranceDashboardView() {
               <Plus className="w-3.5 h-3.5" />
               <span>{t('create_facility', 'Add Credit Facility')}</span>
             </Link>
+            <button
+              onClick={handleSignOut}
+              title="Sign Out to Authentication"
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 text-xs font-bold shadow-sm transition hover:scale-105 cursor-pointer"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              <span>Logout</span>
+            </button>
           </div>
         </div>
 

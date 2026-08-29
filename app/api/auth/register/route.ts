@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         { error: { code: "invalid_role", message: "Invalid role specified." } },
         { status: 400 }
-`      );
+      );
     }
 
     const saltRounds = 12;
@@ -69,12 +69,11 @@ export async function POST(req: NextRequest) {
     const connection = await pool.getConnection();
 
     try {
-      // 1. Check duplicate phone in `farmers`
-      if (finalPhone) {
-        const [existing]: any = await connection.query(
-          'SELECT id FROM farmers WHERE phone = ? LIMIT 1;',
-          [finalPhone]
-        );
+      // 1. Check duplicate user in `users`
+      const [existingUsers]: any = await connection.query(
+        'SELECT id FROM users WHERE (phone = ? AND ? != "") OR (email = ? AND ? IS NOT NULL) OR (username = ? AND ? != "") LIMIT 1;',
+        [finalPhone, finalPhone, finalEmail, finalEmail, finalUsername, finalUsername]
+      );
 
       if (existingUsers && existingUsers.length > 0) {
         return NextResponse.json(
@@ -107,52 +106,45 @@ export async function POST(req: NextRequest) {
         ]
       );
 
-      // 3. If farmer, insert into `farmers`, `farms`, and `crops`
+      // 3. If farmer, insert into `farmer_profiles`, `crops`
       if (normalizedRole === 'farmer') {
-        await connection.query(
-          `INSERT INTO farmers (id, name, phone, email, password_hash, district, village, language, land_area, state)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
-          [
-            userId,
-            finalName,
-            finalPhone || `943${timestamp.toString().slice(-7)}`,
-            finalEmail,
-            hashedPassword,
-            district || 'Mayurbhanj',
-            village || 'Baripada',
-            preferredLanguage || language || 'en',
-            parsedArea,
-            state || 'Odisha',
-          ]
-        );
+        try {
+          await connection.query(
+            `INSERT INTO farmer_profiles (id, user_id, name, phone, district, village, state, language, land_area, soil_type)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
+            [
+              userId,
+              userId,
+              finalName,
+              finalPhone || `943${timestamp.toString().slice(-7)}`,
+              district || 'Mayurbhanj',
+              village || 'Baripada',
+              state || 'Odisha',
+              preferredLanguage || language || 'en',
+              parsedArea,
+              soilType || 'Red Loamy',
+            ]
+          );
+        } catch (fErr) {
+          console.warn('[farmer_profiles insert warning]:', fErr);
+        }
 
-        await connection.query(
-          `INSERT INTO farms (id, farmer_id, name, latitude, longitude, area, soil_type, village, district)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);`,
-          [
-            farmId,
-            userId,
-            `${finalName}'s Farm`,
-            21.9322000,
-            86.7483000,
-            parsedArea,
-            soilType || 'Red Loamy',
-            village || 'Baripada',
-            district || 'Mayurbhanj',
-          ]
-        );
-
-        await connection.query(
-          `INSERT INTO crops (id, farmer_id, name, stage, sowing_date)
-           VALUES (?, ?, ?, ?, ?);`,
-          [
-            cropId,
-            userId,
-            currentCrop || 'Rice / Paddy',
-            'Vegetative',
-            sowingDate && /^\d{4}-\d{2}-\d{2}$/.test(sowingDate) ? sowingDate : new Date().toISOString().split('T')[0],
-          ]
-        );
+        try {
+          await connection.query(
+            `INSERT INTO crops (id, farmer_id, name, stage, sowing_date, area_acres)
+             VALUES (?, ?, ?, ?, ?, ?);`,
+            [
+              cropId,
+              userId,
+              currentCrop || 'Rice / Paddy',
+              'Vegetative Stage',
+              sowingDate && /^\d{4}-\d{2}-\d{2}$/.test(sowingDate) ? sowingDate : new Date().toISOString().split('T')[0],
+              parsedArea
+            ]
+          );
+        } catch (cErr) {
+          console.warn('[crops insert warning]:', cErr);
+        }
       }
 
       await connection.commit();
@@ -166,26 +158,46 @@ export async function POST(req: NextRequest) {
         mobileNumber: finalPhone || undefined,
       });
 
-      return NextResponse.json({
+      const registeredUser = {
+        id: userId,
+        fullName: finalName,
+        email: finalEmail,
+        mobileNumber: finalPhone,
+        role: normalizedRole,
+        district,
+        village,
+        state,
+        landArea: parsedArea,
+        currentCrop
+      };
+
+      const response = NextResponse.json({
         success: true,
         message: "User registered successfully.",
         accessToken,
         userId,
         farmerId: userId,
         role: normalizedRole,
-        user: {
-          id: userId,
-          fullName: finalName,
-          email: finalEmail,
-          mobileNumber: finalPhone,
-          role: normalizedRole,
-          district,
-          village,
-          state,
-          landArea: parsedArea,
-          currentCrop
-        }
+        user: registeredUser
       }, { status: 201 });
+
+      response.cookies.set('smartcrop_token', accessToken, {
+        path: '/',
+        httpOnly: false,
+        sameSite: 'lax',
+        maxAge: 86400 * 7,
+        secure: process.env.NODE_ENV === 'production',
+      });
+
+      response.cookies.set('smartcrop_session', JSON.stringify(registeredUser), {
+        path: '/',
+        httpOnly: false,
+        sameSite: 'lax',
+        maxAge: 86400 * 7,
+        secure: process.env.NODE_ENV === 'production',
+      });
+
+      return response;
 
     } catch (dbErr: any) {
       await connection.rollback();

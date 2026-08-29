@@ -11,12 +11,30 @@ export async function GET(
     const rawParams = await (context.params as any);
     const bankId = rawParams?.bankId || '';
 
-    // ---- 1. Bank profile (404 if not found) ----
-    const bankRows = await query<Record<string, any>[]>(
-      `SELECT id, bank_name, institution_type, verification_status, state, district
-       FROM banks WHERE id = ?`,
-      [bankId]
-    );
+    // Run all 3 queries concurrently in parallel
+    const [bankRows, statusRows, recent] = await Promise.all([
+      query<Record<string, any>[]>(
+        `SELECT id, bank_name, institution_type, verification_status, state, district
+         FROM banks WHERE id = ?`,
+        [bankId],
+        2500
+      ),
+      query<{ status: string; count: number }[]>(
+        "SELECT status, COUNT(*) AS count FROM financial_facilities WHERE bank_id = ? AND status != 'deleted' GROUP BY status",
+        [bankId],
+        2500
+      ),
+      query<Record<string, any>[]>(
+        `SELECT id, facility_name, facility_type, status, interest_rate, updated_at
+         FROM financial_facilities
+         WHERE bank_id = ? AND status != 'deleted'
+         ORDER BY updated_at DESC
+         LIMIT 5`,
+        [bankId],
+        2500
+      ),
+    ]);
+
     if (bankRows.length === 0) {
       return NextResponse.json(
         { error: `No bank found with id "${bankId}".` },
@@ -25,27 +43,12 @@ export async function GET(
     }
     const bank = bankRows[0];
 
-    // ---- 2. Facility counts grouped by status (excluding deleted) ----
-    const statusRows = await query<{ status: string; count: number }[]>(
-      "SELECT status, COUNT(*) AS count FROM financial_facilities WHERE bank_id = ? AND status != 'deleted' GROUP BY status",
-      [bankId]
-    );
     const statusCounts: Record<string, number> = {};
     let total = 0;
     for (const row of statusRows) {
       statusCounts[row.status] = Number(row.count);
       total += Number(row.count);
     }
-
-    // ---- 3. Five most recent facilities (excluding deleted) ----
-    const recent = await query<Record<string, any>[]>(
-      `SELECT id, facility_name, facility_type, status, interest_rate, updated_at
-       FROM financial_facilities
-       WHERE bank_id = ? AND status != 'deleted'
-       ORDER BY updated_at DESC
-       LIMIT 5`,
-      [bankId]
-    );
 
     return NextResponse.json({
       bank: {

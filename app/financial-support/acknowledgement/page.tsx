@@ -1,4 +1,7 @@
+import { Suspense } from 'react';
 import AcknowledgementPage from "@/Financial Support/acknowledgement/AcknowledgementPage";
+
+export const dynamic = 'force-dynamic';
 
 export const metadata = {
   title: "Smart Crop | Loan Application Acknowledgement",
@@ -6,5 +9,9 @@ export const metadata = {
 };
 
 export default function Page() {
-  return <AcknowledgementPage />;
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading Acknowledgement...</div>}>
+      <AcknowledgementPage />
+    </Suspense>
+  );
 }

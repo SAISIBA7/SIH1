@@ -261,11 +261,16 @@ export const smartCropAuth = {
   },
 
   /**
-   * Save session to localStorage
+   * Save session to localStorage and cookie for server-side auth guards
    */
   saveSession(session: UserSession) {
     if (typeof window !== 'undefined') {
       localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+      try {
+        document.cookie = `smartcrop_session=${encodeURIComponent(JSON.stringify(session))}; path=/; max-age=604800; SameSite=Lax`;
+      } catch {
+        // ignore cookie errors
+      }
     }
   },
 
@@ -751,12 +756,19 @@ export const smartCropAuth = {
    */
   async signOut(): Promise<void> {
     try {
-      await insforge.auth.signOut();
+      await fetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
+      await insforge.auth.signOut().catch(() => {});
     } catch {
       // ignore
     }
     if (typeof window !== 'undefined') {
       localStorage.removeItem(SESSION_KEY);
+      try {
+        document.cookie = 'smartcrop_token=; path=/; max-age=0; SameSite=Lax';
+        document.cookie = 'smartcrop_session=; path=/; max-age=0; SameSite=Lax';
+      } catch {
+        // ignore cookie errors
+      }
     }
   },
 

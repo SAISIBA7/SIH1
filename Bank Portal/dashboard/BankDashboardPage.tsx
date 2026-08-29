@@ -1,10 +1,11 @@
 'use client';
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { Card, BANK_PAGE_CONTAINER_STYLE } from '../ui/BankComponents';
 import LanguageSelector from '@/components/LanguageSelector';
 import { useLanguage } from '@/lib/language-context';
+import { smartCropAuth } from '@/lib/smartcrop-auth';
 
 interface DashboardData {
   bank: {
@@ -54,6 +55,7 @@ const fmtDate = (iso: string) =>
   new Date(iso).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
 
 export default function BankDashboardPage() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const bankId = searchParams?.get('bankId') || 'bank_test_facility_check';
   const { t } = useLanguage();
@@ -90,10 +92,25 @@ export default function BankDashboardPage() {
   // ---- Loading state ----
   if (loading) {
     return (
-      <div style={BANK_PAGE_CONTAINER_STYLE}>
-        <div style={{ maxWidth: '920px', margin: '0 auto', textAlign: 'center', padding: '5rem 1rem' }}>
+      <div style={{ ...BANK_PAGE_CONTAINER_STYLE, position: 'relative' }}>
+        <div
+          className="fixed inset-0 -z-20 block md:hidden bg-cover bg-bottom bg-no-repeat"
+          style={{ backgroundImage: "url('/bg-phone.png')" }}
+          aria-hidden="true"
+        />
+        <div
+          className="fixed inset-0 -z-20 hidden md:block bg-cover bg-center bg-no-repeat"
+          style={{ backgroundImage: "url('/bg-laptop.png')" }}
+          aria-hidden="true"
+        />
+        <div
+          className="fixed inset-0 -z-10"
+          style={{ background: "rgba(240, 248, 235, 0.82)", backdropFilter: "blur(4px)" }}
+          aria-hidden="true"
+        />
+        <div style={{ maxWidth: '920px', margin: '0 auto', textAlign: 'center', padding: '5rem 1rem', position: 'relative', zIndex: 1 }}>
           <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>🏦</div>
-          <p style={{ color: '#475569', fontWeight: 700 }}>{t('loading', 'Loading dashboard…')}</p>
+          <p style={{ color: '#166534', fontWeight: 700 }}>{t('loading', 'Loading dashboard…')}</p>
         </div>
       </div>
     );
@@ -102,8 +119,23 @@ export default function BankDashboardPage() {
   // ---- Error state ----
   if (error || !data) {
     return (
-      <div style={BANK_PAGE_CONTAINER_STYLE}>
-        <div style={{ maxWidth: '640px', margin: '0 auto', paddingTop: '3rem' }}>
+      <div style={{ ...BANK_PAGE_CONTAINER_STYLE, position: 'relative' }}>
+        <div
+          className="fixed inset-0 -z-20 block md:hidden bg-cover bg-bottom bg-no-repeat"
+          style={{ backgroundImage: "url('/bg-phone.png')" }}
+          aria-hidden="true"
+        />
+        <div
+          className="fixed inset-0 -z-20 hidden md:block bg-cover bg-center bg-no-repeat"
+          style={{ backgroundImage: "url('/bg-laptop.png')" }}
+          aria-hidden="true"
+        />
+        <div
+          className="fixed inset-0 -z-10"
+          style={{ background: "rgba(240, 248, 235, 0.82)", backdropFilter: "blur(4px)" }}
+          aria-hidden="true"
+        />
+        <div style={{ maxWidth: '640px', margin: '0 auto', paddingTop: '3rem', position: 'relative', zIndex: 1 }}>
           <Card>
             <div style={{ textAlign: 'center', padding: '2rem 1rem' }}>
               <div style={{ fontSize: '2.2rem', marginBottom: '0.75rem' }}>⚠️</div>
@@ -120,7 +152,24 @@ export default function BankDashboardPage() {
   const counts = data.counts;
 
   return (
-    <div style={BANK_PAGE_CONTAINER_STYLE}>
+    <div style={{ ...BANK_PAGE_CONTAINER_STYLE, position: 'relative' }} className="selection:bg-emerald-500 selection:text-white">
+      {/* ── Fixed background layer from Crop Monitoring ── */}
+      <div
+        className="fixed inset-0 -z-20 block md:hidden bg-cover bg-bottom bg-no-repeat"
+        style={{ backgroundImage: "url('/bg-phone.png')" }}
+        aria-hidden="true"
+      />
+      <div
+        className="fixed inset-0 -z-20 hidden md:block bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: "url('/bg-laptop.png')" }}
+        aria-hidden="true"
+      />
+      <div
+        className="fixed inset-0 -z-10"
+        style={{ background: "rgba(240, 248, 235, 0.82)", backdropFilter: "blur(4px)" }}
+        aria-hidden="true"
+      />
+
       <style>{`
         .bank-stat-card {
           transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s;
@@ -175,8 +224,31 @@ export default function BankDashboardPage() {
             </p>
           </div>
 
-          <div style={{ marginTop: '0.5rem' }}>
+          <div style={{ marginTop: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             <LanguageSelector variant="light" />
+            <button
+              onClick={async () => {
+                await smartCropAuth.signOut();
+                router.push('/authentication');
+              }}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                backgroundColor: '#fef2f2',
+                border: '1px solid #fecaca',
+                color: '#b91c1c',
+                padding: '0.45rem 0.9rem',
+                borderRadius: '20px',
+                fontSize: '0.8rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              <span>🚪</span>
+              <span>Sign Out</span>
+            </button>
           </div>
         </div>
 
@@ -194,11 +266,35 @@ export default function BankDashboardPage() {
                 </p>
               </div>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: vBadge.bg, border: `1px solid ${vBadge.border}`, padding: '0.45rem 1.1rem', borderRadius: '24px', boxShadow: '0 2px 6px rgba(16,185,129,0.1)' }}>
-              <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: vBadge.dot, display: 'inline-block' }}></span>
-              <span style={{ color: vBadge.color, fontWeight: 800, fontSize: '0.85rem', letterSpacing: '0.02em' }}>
-                {t(vBadge.key, vBadge.defaultLabel)}
-              </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: vBadge.bg, border: `1px solid ${vBadge.border}`, padding: '0.45rem 1.1rem', borderRadius: '24px', boxShadow: '0 2px 6px rgba(16,185,129,0.1)' }}>
+                <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: vBadge.dot, display: 'inline-block' }}></span>
+                <span style={{ color: vBadge.color, fontWeight: 800, fontSize: '0.85rem', letterSpacing: '0.02em' }}>
+                  {t(vBadge.key, vBadge.defaultLabel)}
+                </span>
+              </div>
+              <button
+                onClick={async () => {
+                  await smartCropAuth.signOut();
+                  router.push('/authentication');
+                }}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                  background: '#ffffff',
+                  border: '1px solid #e2e8f0',
+                  color: '#dc2626',
+                  padding: '0.45rem 0.85rem',
+                  borderRadius: '20px',
+                  fontSize: '0.8rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+                }}
+              >
+                Sign Out
+              </button>
             </div>
           </div>
         </Card>
@@ -242,9 +338,9 @@ export default function BankDashboardPage() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
             {[
               { href: `/bank-portal/facilities/add?bankId=${bankId}`, key: 'add_facility', label: '+ Add Facility', icon: '📋', primary: true },
-              { href: '/bank-portal/facilities/manage', key: 'manage_facilities', label: 'Manage Facilities', icon: '⚙️', primary: false },
+              { href: `/bank-portal/facilities?bankId=${bankId}`, key: 'manage_facilities', label: 'Manage Facilities', icon: '⚙️', primary: false },
               { href: '/bank-portal/register', key: 'edit_bank_profile', label: 'Edit Bank Profile', icon: '🏦', primary: false },
-              { href: '/financial-support/list', key: 'preview_farmer_view', label: 'Preview Farmer View', icon: '👁️', primary: false },
+              { href: '/financial-support', key: 'preview_farmer_view', label: 'Preview Farmer View', icon: '👁️', primary: false },
             ].map(a => (
               <Link
                 key={a.href}

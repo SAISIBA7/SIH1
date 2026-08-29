@@ -18,7 +18,7 @@ export async function GET(
   try {
     const { id } = await params;
 
-    const rows = await query<EquipmentRow>(
+    const rows = await query<EquipmentRow[]>(
       `
       SELECT id, name, type, owner, location, price_per_hour, availability
       FROM equipment

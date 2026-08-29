@@ -13,7 +13,7 @@ type EquipmentRow = {
 
 export async function GET() {
   try {
-    const rows: EquipmentRow[] = await query<EquipmentRow>(`
+    const rows: EquipmentRow[] = await query<EquipmentRow[]>(`
       SELECT id, name, type, owner, location, price_per_hour, availability
       FROM equipment
     `);

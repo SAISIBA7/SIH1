@@ -74,7 +74,24 @@ export default function BankRegisterPage() {
   };
 
   return (
-    <div style={BANK_PAGE_CONTAINER_STYLE}>
+    <div style={{ ...BANK_PAGE_CONTAINER_STYLE, position: 'relative' }} className="selection:bg-emerald-500 selection:text-white">
+      {/* ── Fixed background layer from Crop Monitoring ── */}
+      <div
+        className="fixed inset-0 -z-20 block md:hidden bg-cover bg-bottom bg-no-repeat"
+        style={{ backgroundImage: "url('/bg-phone.png')" }}
+        aria-hidden="true"
+      />
+      <div
+        className="fixed inset-0 -z-20 hidden md:block bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: "url('/bg-laptop.png')" }}
+        aria-hidden="true"
+      />
+      <div
+        className="fixed inset-0 -z-10"
+        style={{ background: "rgba(240, 248, 235, 0.82)", backdropFilter: "blur(4px)" }}
+        aria-hidden="true"
+      />
+
       <style>{`
         .bank-input:focus {
           border-color: #2563eb !important;

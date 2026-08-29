@@ -1,4 +1,7 @@
+import { Suspense } from 'react';
 import AddFacilityPage from "@/Bank Portal/facilities/AddFacilityPage";
+
+export const dynamic = 'force-dynamic';
 
 export const metadata = {
   title: "Smart Crop | Add Financial Facility",
@@ -6,5 +9,9 @@ export const metadata = {
 };
 
 export default function Page() {
-  return <AddFacilityPage />;
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
+      <AddFacilityPage />
+    </Suspense>
+  );
 }

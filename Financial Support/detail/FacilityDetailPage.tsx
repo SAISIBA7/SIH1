@@ -198,7 +198,7 @@ export default function FacilityDetailPage() {
       >
         {/* Back Link */}
         <Link
-          href="/financial-support/list"
+          href="/financial-support"
           className="farmer-back-link"
           style={{
             color: '#166534',
@@ -260,7 +260,7 @@ export default function FacilityDetailPage() {
               {error || 'This financial facility is either unavailable, unpublished, or the requested link does not exist.'}
             </p>
             <Link
-              href="/financial-support/list"
+              href="/financial-support"
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',

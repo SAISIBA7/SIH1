@@ -2,15 +2,18 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { 
   Building2, Tractor, Users, FileText, ArrowLeft, BarChart3, 
-  CheckCircle2, AlertCircle, Sparkles, Plus, ExternalLink
+  CheckCircle2, AlertCircle, Sparkles, Plus, ExternalLink, LogOut
 } from 'lucide-react';
 import LanguageSelector from '@/components/LanguageSelector';
 import { useLanguage } from '@/lib/language-context';
+import { smartCropAuth } from '@/lib/smartcrop-auth';
 
 export default function GovernmentDashboardView() {
   const { t } = useLanguage();
+  const router = useRouter();
   const [data, setData] = useState<any>(null);
 
   useEffect(() => {
@@ -21,6 +24,13 @@ export default function GovernmentDashboardView() {
       })
       .catch(console.error);
   }, []);
+
+  const handleSignOut = async () => {
+    try {
+      await smartCropAuth.signOut();
+    } catch {}
+    router.push('/authentication');
+  };
 
   return (
     <div className="min-h-screen bg-[#F2F2EF] text-[#1A1A1A] p-4 md:p-8 font-sans">
@@ -41,6 +51,14 @@ export default function GovernmentDashboardView() {
               <Building2 className="w-3.5 h-3.5" />
               State Agriculture Department
             </span>
+            <button
+              onClick={handleSignOut}
+              title="Sign Out to Authentication"
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 text-xs font-bold shadow-sm transition hover:scale-105 cursor-pointer"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              <span>Logout</span>
+            </button>
           </div>
         </div>
 

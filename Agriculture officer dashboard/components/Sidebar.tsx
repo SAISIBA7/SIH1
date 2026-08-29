@@ -1,7 +1,9 @@
 "use client";
 
-import { Home, AlertTriangle, MapPin, BarChart2, Bell, Database, Clock, Settings, Globe } from "lucide-react";
+import { Home, AlertTriangle, MapPin, BarChart2, Bell, Database, Clock, Settings, Globe, LogOut } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useLanguage } from "@/lib/language-context";
+import { smartCropAuth } from "@/lib/smartcrop-auth";
 
 const navItems = [
   { key: "command_center", defaultName: "Command Center", icon: Home },
@@ -17,6 +19,7 @@ const navItems = [
 
 export default function Sidebar({ isOpen }: { isOpen: boolean }) {
   const { t } = useLanguage();
+  const router = useRouter();
 
   return (
     <aside className={`w-full md:w-64 glass flex flex-col p-4 md:p-6 text-[#1A1A1A] shrink-0 ${isOpen ? "block" : "hidden"} md:block`}> 
@@ -49,6 +52,22 @@ export default function Sidebar({ isOpen }: { isOpen: boolean }) {
           );
         })}
       </nav>
+
+      {/* Logout Bottom Action */}
+      <div className="pt-3 border-t border-black/10 mt-auto">
+        <button
+          onClick={async () => {
+            try {
+              await smartCropAuth.signOut();
+            } catch {}
+            router.push('/authentication');
+          }}
+          className="w-full flex items-center gap-2 md:gap-3 py-2 px-3 md:py-2.5 md:px-4 rounded-xl text-xs md:text-sm font-semibold text-red-700 hover:bg-red-50/80 border border-red-200 transition-all cursor-pointer"
+        >
+          <LogOut className="w-4 h-4 md:w-5 md:h-5 shrink-0 text-red-600" />
+          <span>Sign Out</span>
+        </button>
+      </div>
     </aside>
   );
 }

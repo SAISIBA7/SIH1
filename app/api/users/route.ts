@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-let usersStore = [
+const usersStore = [
   { id: "USR-101", username: "farmer_ramesh", fullName: "Ramesh Chandra Mohapatra", role: "farmer", status: "active", village: "Baripada", createdAt: "2026-08-20" },
   { id: "USR-102", username: "farmer_basanti", fullName: "Basanti Murmu", role: "farmer", status: "pending", village: "Betnoti", createdAt: "2026-08-27" },
   { id: "USR-103", username: "officer_satyajit", fullName: "Satyajit Jena", role: "admin", status: "active", village: "Baripada Block Office", createdAt: "2026-08-10" },

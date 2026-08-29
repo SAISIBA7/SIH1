@@ -145,10 +145,25 @@ export default function ManageFacilitiesPage() {
   // ---- Loading state ----
   if (loading) {
     return (
-      <div style={BANK_PAGE_CONTAINER_STYLE}>
-        <div style={{ maxWidth: '920px', margin: '0 auto', textAlign: 'center', padding: '5rem 1rem' }}>
+      <div style={{ ...BANK_PAGE_CONTAINER_STYLE, position: 'relative' }}>
+        <div
+          className="fixed inset-0 -z-20 block md:hidden bg-cover bg-bottom bg-no-repeat"
+          style={{ backgroundImage: "url('/bg-phone.png')" }}
+          aria-hidden="true"
+        />
+        <div
+          className="fixed inset-0 -z-20 hidden md:block bg-cover bg-center bg-no-repeat"
+          style={{ backgroundImage: "url('/bg-laptop.png')" }}
+          aria-hidden="true"
+        />
+        <div
+          className="fixed inset-0 -z-10"
+          style={{ background: "rgba(240, 248, 235, 0.82)", backdropFilter: "blur(4px)" }}
+          aria-hidden="true"
+        />
+        <div style={{ maxWidth: '920px', margin: '0 auto', textAlign: 'center', padding: '5rem 1rem', position: 'relative', zIndex: 1 }}>
           <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>📋</div>
-          <p style={{ color: '#475569', fontWeight: 700 }}>Loading facilities…</p>
+          <p style={{ color: '#166534', fontWeight: 700 }}>Loading facilities…</p>
         </div>
       </div>
     );
@@ -157,8 +172,23 @@ export default function ManageFacilitiesPage() {
   // ---- Error state ----
   if (error) {
     return (
-      <div style={BANK_PAGE_CONTAINER_STYLE}>
-        <div style={{ maxWidth: '640px', margin: '0 auto', paddingTop: '3rem' }}>
+      <div style={{ ...BANK_PAGE_CONTAINER_STYLE, position: 'relative' }}>
+        <div
+          className="fixed inset-0 -z-20 block md:hidden bg-cover bg-bottom bg-no-repeat"
+          style={{ backgroundImage: "url('/bg-phone.png')" }}
+          aria-hidden="true"
+        />
+        <div
+          className="fixed inset-0 -z-20 hidden md:block bg-cover bg-center bg-no-repeat"
+          style={{ backgroundImage: "url('/bg-laptop.png')" }}
+          aria-hidden="true"
+        />
+        <div
+          className="fixed inset-0 -z-10"
+          style={{ background: "rgba(240, 248, 235, 0.82)", backdropFilter: "blur(4px)" }}
+          aria-hidden="true"
+        />
+        <div style={{ maxWidth: '640px', margin: '0 auto', paddingTop: '3rem', position: 'relative', zIndex: 1 }}>
           <Card>
             <div style={{ textAlign: 'center', padding: '2rem 1rem' }}>
               <div style={{ fontSize: '2.2rem', marginBottom: '0.75rem' }}>⚠️</div>
@@ -172,7 +202,24 @@ export default function ManageFacilitiesPage() {
   }
 
   return (
-    <div style={BANK_PAGE_CONTAINER_STYLE}>
+    <div style={{ ...BANK_PAGE_CONTAINER_STYLE, position: 'relative' }} className="selection:bg-emerald-500 selection:text-white">
+      {/* ── Fixed background layer from Crop Monitoring ── */}
+      <div
+        className="fixed inset-0 -z-20 block md:hidden bg-cover bg-bottom bg-no-repeat"
+        style={{ backgroundImage: "url('/bg-phone.png')" }}
+        aria-hidden="true"
+      />
+      <div
+        className="fixed inset-0 -z-20 hidden md:block bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: "url('/bg-laptop.png')" }}
+        aria-hidden="true"
+      />
+      <div
+        className="fixed inset-0 -z-10"
+        style={{ background: "rgba(240, 248, 235, 0.82)", backdropFilter: "blur(4px)" }}
+        aria-hidden="true"
+      />
+
       <style>{`
         .facility-action-link {
           transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1) !important;

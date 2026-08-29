@@ -206,7 +206,7 @@ export default function AcknowledgementPage() {
               {error || 'This financial facility is either unavailable, unpublished, or the redirect link is invalid.'}
             </p>
             <Link
-              href="/financial-support/list"
+              href="/financial-support"
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import { InteractiveCalendar } from "../Crop Monitoring page/components/InteractiveCalendar";
 import { SelectedDatePanel } from "../Crop Monitoring page/components/SelectedDatePanel";
 import { AddActivityModal } from "../Crop Monitoring page/components/AddActivityModal";
@@ -28,7 +28,7 @@ export default function CropDetailsCalendar({ cropId }: CropDetailsCalendarProps
   const [currentCrop, setCurrentCrop] = useState<RegisteredCrop>(initialCrop);
   
   // Reset crop if the cropId prop changes
-  useMemo(() => {
+  useEffect(() => {
     setCurrentCrop(getMockCrop(cropId));
   }, [cropId]);
 

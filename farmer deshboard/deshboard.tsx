@@ -8,12 +8,13 @@ import { RadialBarChart, RadialBar, AreaChart, Area, ResponsiveContainer } from 
 import { 
   Search, Bell, User, ArrowRight, Activity, ThermometerSun, Leaf, Droplets, 
   MapPin, ChevronRight, Wind, AlertTriangle, Navigation, 
-  Home, ShieldAlert, Sparkles, TrendingUp, Landmark 
+  Home, ShieldAlert, Sparkles, TrendingUp, Landmark, LogOut 
 } from 'lucide-react';
 import { io, Socket } from 'socket.io-client';
 import bgImage from './assets/bg.png';
 import { useLanguage } from '@/lib/language-context';
 import LanguageSelector from '@/components/LanguageSelector';
+import { smartCropAuth } from '@/lib/smartcrop-auth';
 
 interface FarmerLocation {
   farmerId: string;
@@ -353,6 +354,40 @@ export default function SmartCropDashboard() {
                 className="overflow-hidden whitespace-nowrap text-xs font-semibold text-[#1B1E19]"
               >
                 Profile
+              </motion.span>
+            </button>
+
+            {/* Logout Button */}
+            <button
+              onClick={async () => {
+                await smartCropAuth.signOut();
+                router.push('/authentication');
+              }}
+              onMouseEnter={() => setHoveredAction('logout')}
+              onMouseLeave={() => setHoveredAction(null)}
+              title="Sign Out to Authentication"
+              className={`h-11 rounded-full flex items-center justify-center bg-red-50/90 hover:bg-red-100 border border-red-200/80 transition-all duration-300 shadow-sm relative cursor-pointer group ${
+                hoveredAction === 'logout' ? 'px-4' : 'w-11'
+              }`}
+            >
+              <motion.div
+                animate={{ y: hoveredAction === 'logout' ? -2 : 0 }}
+                transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+                className="relative flex items-center justify-center shrink-0"
+              >
+                <LogOut size={17} className="text-red-700 group-hover:scale-105 transition-transform" />
+              </motion.div>
+              <motion.span
+                initial={false}
+                animate={{
+                  width: hoveredAction === 'logout' ? 'auto' : 0,
+                  opacity: hoveredAction === 'logout' ? 1 : 0,
+                  marginLeft: hoveredAction === 'logout' ? 6 : 0,
+                }}
+                transition={{ type: 'spring', stiffness: 350, damping: 30 }}
+                className="overflow-hidden whitespace-nowrap text-xs font-semibold text-red-700"
+              >
+                Logout
               </motion.span>
             </button>
           </div>

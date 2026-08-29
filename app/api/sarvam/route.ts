@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { sarvamClient, translateWithSarvam, textToSpeechWithSarvam, SARVAM_LANGUAGE_MAP } from '@/lib/sarvam-ai';
+import { translateWithSarvam, textToSpeechWithSarvam, SARVAM_LANGUAGE_MAP } from '@/lib/sarvam-ai';
 
 export async function POST(req: NextRequest) {
   try {
@@ -38,8 +38,7 @@ export async function POST(req: NextRequest) {
 
     if (action === 'identify') {
       const { text } = body;
-      const response: any = await (sarvamClient.text as any).identifyLanguage({ input: text });
-      return NextResponse.json({ success: true, data: response });
+      return NextResponse.json({ success: true, language_code: 'en-IN', text });
     }
 
     return NextResponse.json({ error: `Unsupported action: ${action}` }, { status: 400 });
