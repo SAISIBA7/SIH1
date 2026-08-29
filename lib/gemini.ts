@@ -12,60 +12,65 @@ interface GeminiGenerateOptions {
 }
 
 export async function callGeminiApi({ systemPrompt, userPrompt, responseJson = true }: GeminiGenerateOptions): Promise<string> {
-  if (!GEMINI_API_KEY) {
+  const apiKey = process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY || '';
+  if (!apiKey) {
     console.warn('[Gemini Service] GEMINI_API_KEY is not configured. Using high-fidelity heuristic AI synthesis.');
     return '';
   }
 
-  try {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
-    
-    const contents: any[] = [];
-    if (systemPrompt) {
-      contents.push({
-        role: 'user',
-        parts: [{ text: `System Instruction: ${systemPrompt}\n\nUser Request: ${userPrompt}` }]
-      });
-    } else {
-      contents.push({
-        role: 'user',
-        parts: [{ text: userPrompt }]
-      });
-    }
+  const models = ['gemini-2.5-flash', 'gemini-flash-latest', 'gemini-2.5-pro'];
 
-    const payload: any = {
-      contents,
-      generationConfig: {
-        temperature: 0.2,
-        maxOutputTokens: 2048,
+  for (const model of models) {
+    try {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+      
+      const contents: any[] = [];
+      if (systemPrompt) {
+        contents.push({
+          role: 'user',
+          parts: [{ text: `System Instruction: ${systemPrompt}\n\nUser Request: ${userPrompt}` }]
+        });
+      } else {
+        contents.push({
+          role: 'user',
+          parts: [{ text: userPrompt }]
+        });
       }
-    };
 
-    if (responseJson) {
-      payload.generationConfig.responseMimeType = "application/json";
+      const payload: any = {
+        contents,
+        generationConfig: {
+          temperature: 0.25,
+          maxOutputTokens: 2048,
+        }
+      };
+
+      if (responseJson) {
+        payload.generationConfig.responseMimeType = "application/json";
+      }
+
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        const candidateText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (candidateText) return candidateText;
+      } else {
+        const errorText = await res.text();
+        console.warn(`[Gemini API ${model} Warning] ${res.status}: ${errorText}`);
+      }
+    } catch (err: any) {
+      console.warn(`[Gemini Service Exception on ${model}]:`, err?.message || err);
     }
-
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(payload),
-    });
-
-    if (!res.ok) {
-      const errorText = await res.text();
-      console.warn(`[Gemini API Warning] ${res.status}: ${errorText}`);
-      return '';
-    }
-
-    const data = await res.json();
-    const candidateText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-    return candidateText || '';
-  } catch (err: any) {
-    console.warn('[Gemini Service Exception]:', err?.message || err);
-    return '';
   }
+
+  return '';
 }
 
 /**
@@ -202,14 +207,22 @@ Return JSON format:
   };
 }
 
-/**
- * 3. AI Agronomist Chat (Section 3)
- */
 export async function generateAIChatResponse(message: string, context?: any) {
-  const prompt = `You are the Smart Crop AI Agronomist, a friendly, knowledgeable agricultural expert for Indian farmers (especially Odisha/Eastern India).
-User question: "${message}"
-Context: ${JSON.stringify(context || {})}
-Provide a practical, supportive, bulleted or direct agronomic answer. Keep tone respectful, farmer-friendly, and actionable.`;
+  const prompt = `You are the Smart Crop AI Agronomist, a knowledgeable agricultural specialist for Indian farmers (specifically Odisha, Mayurbhanj district).
+
+Active Crop: ${context?.cropName || 'Paddy / Alternative Crop'}
+Stage: ${context?.stage || 'Active Field Growth'}
+District: ${context?.district || 'Mayurbhanj, Odisha'}
+Additional Context: ${JSON.stringify(context || {})}
+
+Farmer's Question: "${message}"
+
+Guidelines:
+1. Provide practical, supportive, step-by-step agronomic advice.
+2. If asked about fertilizers/chemical dosages, provide exact per-acre quantities (e.g. 100 kg Gypsum at 45 DAS for groundnut; 20kg DAP + 15kg Urea for paddy).
+3. If asked about pests/diseases, give symptoms, cultural prevention, and specific chemical spray names with water dilution ratios.
+4. If asked in Odia or about alternative crops, explain why switching saves water and increases profit.
+5. Format with bold headers, emojis, and actionable bullet points.`;
 
   const rawAi = await callGeminiApi({
     userPrompt: prompt,
@@ -225,5 +238,5 @@ Provide a practical, supportive, bulleted or direct agronomic answer. Keep tone 
 1. **Immediate Recommendation**: Ensure proper root-zone aeration and check for early signs of yellowing or leaf spot.
 2. **Nutrient Application**: For current vegetative stages, balanced NPK application or organic Jeevamrutha foliar spray twice weekly will stimulate rapid resilience.
 3. **Moisture Advice**: Irrigate during cooler evening hours to reduce thermal shock to root tissues.
-4. **Officer Connection**: If symptoms persist for more than 48 hours, you can trigger a field visit request directly from your Smart Crop dashboard.`;
+4. **Alternative Crops**: Consider Groundnut or Mustard to reduce water consumption by >50% while boosting net profit per acre.`;
 }

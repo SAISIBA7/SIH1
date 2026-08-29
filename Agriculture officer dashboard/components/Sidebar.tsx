@@ -1,21 +1,23 @@
 "use client";
 
-// Placeholder icons – replace with actual Lucide imports as needed
 import { Home, AlertTriangle, MapPin, BarChart2, Bell, Database, Clock, Settings, Globe } from "lucide-react";
+import { useLanguage } from "@/lib/language-context";
 
 const navItems = [
-  { name: "Command Center", icon: Home },
-  { name: "High Risk Farmers", icon: AlertTriangle },
-  { name: "Distress Map", icon: MapPin },
-  { name: "Analytics", icon: BarChart2 },
-  { name: "Alerts", icon: Bell },
-  { name: "Farmer Database", icon: Database },
-  { name: "Intervention History", icon: Clock },
-  { name: "Settings", icon: Settings },
-  { name: "Government Schemes", icon: Globe, href: "/government-equipment-schemes" },
+  { key: "command_center", defaultName: "Command Center", icon: Home },
+  { key: "high_risk_farmers", defaultName: "High Risk Farmers", icon: AlertTriangle, href: "/officer-dashboard/farmers" },
+  { key: "distress_map", defaultName: "Distress Map", icon: MapPin },
+  { key: "analytics", defaultName: "Analytics", icon: BarChart2 },
+  { key: "alerts", defaultName: "Alerts", icon: Bell, href: "/notifications" },
+  { key: "farmer_database", defaultName: "Farmer Database", icon: Database, href: "/officer-dashboard/farmers" },
+  { key: "intervention_history", defaultName: "Intervention History", icon: Clock },
+  { key: "settings", defaultName: "Settings", icon: Settings },
+  { key: "government_schemes", defaultName: "Government Schemes", icon: Globe, href: "/schemes" },
 ];
 
 export default function Sidebar({ isOpen }: { isOpen: boolean }) {
+  const { t } = useLanguage();
+
   return (
     <aside className={`w-full md:w-64 glass flex flex-col p-4 md:p-6 text-[#1A1A1A] shrink-0 ${isOpen ? "block" : "hidden"} md:block`}> 
       {/* Logo */}
@@ -29,10 +31,11 @@ export default function Sidebar({ isOpen }: { isOpen: boolean }) {
       <nav className="flex-1 flex flex-row md:flex-col gap-1.5 overflow-x-auto md:overflow-x-visible pb-2 md:pb-0 scrollbar-none">
         {navItems.map((item, idx) => {
           const Icon = item.icon;
-          const isActive = idx === 0; // Command Center active
+          const isActive = idx === 0;
+          const translatedName = t(item.key, item.defaultName);
           return (
             <a
-              key={item.name}
+              key={item.key}
               href={item.href ?? "#"}
               className={`flex items-center gap-2 md:gap-3 py-2 px-3 md:py-2.5 md:px-4 rounded-xl text-xs md:text-sm font-medium transition-all whitespace-nowrap ${
                 isActive
@@ -41,7 +44,7 @@ export default function Sidebar({ isOpen }: { isOpen: boolean }) {
               }`}
             >
               <Icon className="w-4 h-4 md:w-5 md:h-5 shrink-0" />
-              <span>{item.name}</span>
+              <span>{translatedName}</span>
             </a>
           );
         })}

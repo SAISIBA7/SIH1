@@ -6,8 +6,11 @@ import {
   Building2, Tractor, Users, FileText, ArrowLeft, BarChart3, 
   CheckCircle2, AlertCircle, Sparkles, Plus, ExternalLink
 } from 'lucide-react';
+import LanguageSelector from '@/components/LanguageSelector';
+import { useLanguage } from '@/lib/language-context';
 
 export default function GovernmentDashboardView() {
+  const { t } = useLanguage();
   const [data, setData] = useState<any>(null);
 
   useEffect(() => {
@@ -24,18 +27,21 @@ export default function GovernmentDashboardView() {
       <div className="max-w-6xl mx-auto space-y-6">
         
         {/* Navigation Top Bar */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between flex-wrap gap-3 relative z-[999] overflow-visible">
           <Link 
             href="/dashboard" 
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/80 backdrop-blur-md border border-black/10 shadow-sm text-sm font-medium hover:bg-white transition"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/80 backdrop-blur-md border border-black/10 shadow-sm text-sm font-medium hover:bg-white transition cursor-pointer"
           >
             <ArrowLeft className="w-4 h-4" />
-            Farmer Portal
+            {t('dashboard', 'Farmer Portal')}
           </Link>
-          <span className="px-3.5 py-1 rounded-full text-xs font-semibold bg-[#1A1A1A] text-[#CFE362] flex items-center gap-1.5">
-            <Building2 className="w-3.5 h-3.5" />
-            State Agriculture Department
-          </span>
+          <div className="flex items-center gap-3">
+            <LanguageSelector variant="light" />
+            <span className="px-3.5 py-1.5 rounded-full text-xs font-semibold bg-[#1A1A1A] text-[#CFE362] flex items-center gap-1.5 shadow-sm">
+              <Building2 className="w-3.5 h-3.5" />
+              State Agriculture Department
+            </span>
+          </div>
         </div>
 
         {/* Hero Banner */}

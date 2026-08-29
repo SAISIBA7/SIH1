@@ -1,5 +1,6 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { pool, query } from '@/lib/db';
+import { requireAuth } from '@/lib/auth-jwt';
 
 export const dynamic = 'force-dynamic';
 
@@ -28,8 +29,12 @@ function splitList(raw: string): string[] {
 
 const VALID_STATUS = new Set(['draft', 'submitted']);
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
+    const authResult = requireAuth(req, ['bank', 'administrator', 'admin']);
+    if (authResult.errorResponse) {
+      return authResult.errorResponse;
+    }
     let body: Record<string, unknown>;
     try {
       body = await req.json();

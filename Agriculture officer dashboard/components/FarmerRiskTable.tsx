@@ -3,6 +3,7 @@
 import { mockFarmers } from "../data/farmers.mock";
 import { AlertTriangle, AlertCircle, CheckCircle } from "lucide-react";
 import { motion } from "framer-motion";
+import { useLanguage } from "@/lib/language-context";
 
 const tierInfo = {
   high: { badge: "bg-red-500/15 text-red-700 border border-red-500/30", Icon: AlertTriangle },
@@ -11,20 +12,24 @@ const tierInfo = {
 };
 
 export default function FarmerRiskTable({ onRowSelect }: { onRowSelect?: (id: string) => void }) {
+  const { t } = useLanguage();
+
   return (
     <section className="glass p-6">
-      <h2 className="text-lg font-bold text-[#1A1A1A] mb-4">Priority Farmers</h2>
+      <h2 className="text-lg font-bold text-[#1A1A1A] mb-4">
+        {t('priority_farmers', 'Priority Farmers')}
+      </h2>
       <div className="overflow-x-auto">
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="border-b border-[#1A1A1A]/10 text-xs font-bold text-[#6B6B66] uppercase tracking-wider">
-              <th className="pb-3 px-3">Farmer</th>
-              <th className="pb-3 px-3">Crop</th>
-              <th className="pb-3 px-3">Risk Score</th>
-              <th className="pb-3 px-3">Location</th>
-              <th className="pb-3 px-3">Risk Reason</th>
-              <th className="pb-3 px-3">Loan Status</th>
-              <th className="pb-3 px-3 text-right">Action</th>
+              <th className="pb-3 px-3">{t('farmer', 'Farmer')}</th>
+              <th className="pb-3 px-3">{t('crop', 'Crop')}</th>
+              <th className="pb-3 px-3">{t('risk_score', 'Risk Score')}</th>
+              <th className="pb-3 px-3">{t('location', 'Location')}</th>
+              <th className="pb-3 px-3">{t('risk_reason', 'Risk Reason')}</th>
+              <th className="pb-3 px-3">{t('loan_status', 'Loan Status')}</th>
+              <th className="pb-3 px-3 text-right">{t('action', 'Action')}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-[#1A1A1A]/10 text-sm">
@@ -55,7 +60,7 @@ export default function FarmerRiskTable({ onRowSelect }: { onRowSelect?: (id: st
                       }}
                       className="px-3 py-1.5 text-xs font-bold rounded-lg lime-accent hover:opacity-90 transition-opacity shadow-sm"
                     >
-                      View Details
+                      {t('view_details', 'View Details')}
                     </button>
                   </td>
                 </motion.tr>

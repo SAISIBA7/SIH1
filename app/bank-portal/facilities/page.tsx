@@ -1,5 +1,3 @@
-export const dynamic = 'force-dynamic';
-import { Suspense } from 'react';
 import ManageFacilitiesPage from "@/Bank Portal/facilities/ManageFacilitiesPage";
 
 export const metadata = {
@@ -8,9 +6,5 @@ export const metadata = {
 };
 
 export default function Page() {
-  return (
-    <Suspense fallback={<div className="p-8 text-center">Loading facilities...</div>}>
-      <ManageFacilitiesPage />
-    </Suspense>
-  );
+  return <ManageFacilitiesPage />;
 }

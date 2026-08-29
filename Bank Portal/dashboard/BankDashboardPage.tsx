@@ -3,6 +3,8 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Card, BANK_PAGE_CONTAINER_STYLE } from '../ui/BankComponents';
+import LanguageSelector from '@/components/LanguageSelector';
+import { useLanguage } from '@/lib/language-context';
 
 interface DashboardData {
   bank: {
@@ -53,7 +55,8 @@ const fmtDate = (iso: string) =>
 
 export default function BankDashboardPage() {
   const searchParams = useSearchParams();
-  const bankId = searchParams?.get('bankId') ?? '';
+  const bankId = searchParams?.get('bankId') || 'bank_test_facility_check';
+  const { t } = useLanguage();
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -145,30 +148,36 @@ export default function BankDashboardPage() {
 
       <div style={{ maxWidth: '920px', margin: '0 auto' }}>
         {/* Header */}
-        <div style={{ marginBottom: '2rem' }}>
-          <div style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '0.5rem',
-            backgroundColor: 'rgba(220, 252, 231, 0.95)',
-            border: '1px solid rgba(74, 222, 128, 0.5)',
-            color: '#166534',
-            padding: '0.35rem 0.9rem',
-            borderRadius: '20px',
-            fontSize: '0.75rem',
-            fontWeight: 800,
-            letterSpacing: '0.06em',
-            boxShadow: '0 2px 8px rgba(22,163,74,0.2)',
-          }}>
-            <span>🏦</span>
-            <span>BANK PARTNER PORTAL</span>
+        <div style={{ marginBottom: '2rem', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem', position: 'relative', zIndex: 999, overflow: 'visible' }}>
+          <div>
+            <div style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              backgroundColor: 'rgba(220, 252, 231, 0.95)',
+              border: '1px solid rgba(74, 222, 128, 0.5)',
+              color: '#166534',
+              padding: '0.35rem 0.9rem',
+              borderRadius: '20px',
+              fontSize: '0.75rem',
+              fontWeight: 800,
+              letterSpacing: '0.06em',
+              boxShadow: '0 2px 8px rgba(22,163,74,0.2)',
+            }}>
+              <span>🏦</span>
+              <span>{t('bank_portal', 'BANK PARTNER PORTAL')}</span>
+            </div>
+            <h1 style={{ fontSize: '2rem', fontWeight: 800, color: '#0f172a', margin: '0.75rem 0 0.3rem', letterSpacing: '-0.02em' }}>
+              {t('bank_dashboard', 'Bank Dashboard')}
+            </h1>
+            <p style={{ color: '#475569', fontSize: '1rem', margin: 0 }}>
+              {t('welcome', 'Welcome back')}, <strong>{data.bank.bankName}</strong>
+            </p>
           </div>
-          <h1 style={{ fontSize: '2rem', fontWeight: 800, color: '#0f172a', margin: '0.75rem 0 0.3rem', letterSpacing: '-0.02em' }}>
-            Bank Dashboard
-          </h1>
-          <p style={{ color: '#475569', fontSize: '1rem', margin: 0 }}>
-            Welcome back, <strong>{data.bank.bankName}</strong>
-          </p>
+
+          <div style={{ marginTop: '0.5rem' }}>
+            <LanguageSelector variant="light" />
+          </div>
         </div>
 
         {/* Bank Status Card */}

@@ -253,7 +253,7 @@ export default function FarmerProfilePage() {
 
         {/* TOP NAVBAR (Exact match to Hecta aesthetic from reference image) */}
         <header className="w-full bg-white/75 backdrop-blur-xl border border-white/60 shadow-[0_8px_32px_rgba(0,0,0,0.06)] rounded-full px-5 py-3.5 mb-6 flex items-center justify-between transition-all">
-          <Link href="/" className="flex items-center gap-3 hover:opacity-90 transition">
+          <Link href="/dashboard" className="flex items-center gap-3 hover:opacity-90 transition">
             <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#1f3d2b] to-[#2f6b3c] flex items-center justify-center text-[#d8e678] shadow-md shadow-emerald-950/20">
               <Sprout className="w-5 h-5" />
             </div>
@@ -265,7 +265,7 @@ export default function FarmerProfilePage() {
 
           <nav className="hidden md:flex items-center gap-1 bg-black/5 p-1 rounded-full border border-black/5 text-xs font-medium">
             <Link
-              href="/"
+              href="/crop-monitoring"
               className="px-4 py-1.5 rounded-full transition-all duration-200 flex items-center gap-1.5 text-[#3f5245] hover:text-black hover:bg-white/50"
             >
               Crop Monitor
@@ -988,11 +988,11 @@ export default function FarmerProfilePage() {
 
       {/* MOBILE BOTTOM NAVIGATION BAR */}
       <div className="fixed bottom-0 inset-x-0 bg-white/90 backdrop-blur-xl border-t border-black/10 py-2 px-6 flex justify-around items-center z-40 md:hidden shadow-lg">
-        <Link href="/" className="flex flex-col items-center gap-1 text-gray-500 hover:text-[#1f3d2b]">
+        <Link href="/dashboard" className="flex flex-col items-center gap-1 text-gray-500 hover:text-[#1f3d2b]">
           <Home className="w-5 h-5" />
           <span className="text-[10px] font-medium">Home</span>
         </Link>
-        <Link href="/" className="flex flex-col items-center gap-1 text-gray-500 hover:text-[#1f3d2b]">
+        <Link href="/crop-monitoring" className="flex flex-col items-center gap-1 text-gray-500 hover:text-[#1f3d2b]">
           <Sprout className="w-5 h-5" />
           <span className="text-[10px] font-medium">Crop</span>
         </Link>
