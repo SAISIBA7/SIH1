@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         { error: { code: "invalid_role", message: "Invalid role specified." } },
         { status: 400 }
-      );
+`      );
     }
 
     const saltRounds = 12;
@@ -69,11 +69,12 @@ export async function POST(req: NextRequest) {
     const connection = await pool.getConnection();
 
     try {
-      // 1. Check duplicate in `users` and `farmers`
-      const [existingUsers]: any = await connection.query(
-        'SELECT id FROM users WHERE (phone = ? AND ? != "") OR (email = ? AND ? IS NOT NULL) OR (username = ? AND ? != "") LIMIT 1;',
-        [finalPhone, finalPhone, finalEmail, finalEmail, finalUsername, finalUsername]
-      );
+      // 1. Check duplicate phone in `farmers`
+      if (finalPhone) {
+        const [existing]: any = await connection.query(
+          'SELECT id FROM farmers WHERE phone = ? LIMIT 1;',
+          [finalPhone]
+        );
 
       if (existingUsers && existingUsers.length > 0) {
         return NextResponse.json(
