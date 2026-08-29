@@ -52,3 +52,21 @@ export interface ApplicationInfo {
   stage: "SUBMITTED" | "DOCS_RECEIVED" | "UNDER_REVIEW" | "APPROVED" | "POLICY_ACTIVE";
   policyNumber?: string;
 }
+
+export interface BankScheme {
+  id: string;
+  bankId: string;
+  bankName: string;
+  schemeName: string;
+  description?: string;
+  cropsCovered: string[];
+  eligibleLocations?: string[];
+  eligibleSeasons?: string[];
+  eligibilitySummary: string[];
+  coverageAmount?: string;
+  premium?: string;
+  subsidy?: string;
+  policyPeriod?: string;
+  requiredDocuments: string[];
+  availabilityStatus: "available" | "unavailable" | "unknown";
+}
