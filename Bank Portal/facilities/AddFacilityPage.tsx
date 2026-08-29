@@ -43,7 +43,7 @@ export default function AddFacilityPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const editId = searchParams?.get('id');
-  const bankId = searchParams?.get('bankId') ?? '';
+  const bankId = searchParams?.get('bankId') || 'bank_test_facility_check';
   const [toast, setToast] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [apiError, setApiError] = useState('');

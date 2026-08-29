@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { RadialBarChart, RadialBar, AreaChart, Area, ResponsiveContainer } from 'recharts';
 import { 
@@ -10,6 +12,8 @@ import {
 } from 'lucide-react';
 import { io, Socket } from 'socket.io-client';
 import bgImage from './assets/bg.png';
+import { useLanguage } from '@/lib/language-context';
+import LanguageSelector from '@/components/LanguageSelector';
 
 interface FarmerLocation {
   farmerId: string;
@@ -20,6 +24,7 @@ interface FarmerLocation {
 
 export default function SmartCropDashboard() {
   const router = useRouter();
+  const { t } = useLanguage();
   const socketRef = useRef<Socket | null>(null);
   const [isSharingLocation, setIsSharingLocation] = useState(false);
   const [farmerLocations, setFarmerLocations] = useState<FarmerLocation[]>([]);
@@ -56,11 +61,11 @@ export default function SmartCropDashboard() {
   }, []);
 
   const navLinks = [
-    { id: 'home', label: 'Home', icon: Home, href: '/dashboard' },
-    { id: 'risk', label: 'Risk', icon: ShieldAlert, href: '/risk-details' },
-    { id: 'advisory', label: 'Advisory', icon: Sparkles, href: '/crop-monitoring' },
-    { id: 'market', label: 'Market', icon: TrendingUp, href: '/market' },
-    { id: 'schemes', label: 'Schemes', icon: Landmark, href: '/schemes' },
+    { id: 'home', label: t('home', 'Home'), icon: Home, href: '/dashboard' },
+    { id: 'risk', label: t('risk_analysis', 'Risk'), icon: ShieldAlert, href: '/risk-details' },
+    { id: 'advisory', label: t('monitoring', 'Advisory'), icon: Sparkles, href: '/crop-monitoring' },
+    { id: 'market', label: t('market_prices', 'Market'), icon: TrendingUp, href: '/market' },
+    { id: 'schemes', label: t('schemes', 'Schemes'), icon: Landmark, href: '/schemes' },
   ];
 
   useEffect(() => {
@@ -152,10 +157,10 @@ export default function SmartCropDashboard() {
           duration: 0.5, 
           ease: [0.16, 1, 0.3, 1] 
         }}
-        className="fixed top-0 left-0 right-0 z-50 w-full flex justify-center pointer-events-auto"
+        className="fixed top-0 left-0 right-0 z-[999] w-full flex justify-center pointer-events-auto"
       >
         <nav
-          className="relative w-full pt-4 pb-6 px-6 md:px-12 shadow-xl transition-all duration-300 overflow-hidden"
+          className="relative w-full pt-4 pb-6 px-6 md:px-12 shadow-xl transition-all duration-300 overflow-visible"
           style={{
             borderRadius: '0 0 50% 50% / 0 0 36px 36px',
             background: 'linear-gradient(105deg, rgba(206, 235, 150, 0.92) 0%, rgba(247, 248, 244, 0.96) 48%, rgba(248, 218, 192, 0.92) 100%)',
@@ -256,7 +261,10 @@ export default function SmartCropDashboard() {
           </div>
 
           {/* Right Action Icons (Symbols with Expandable Hover Text) */}
-          <div className="flex items-center gap-4 md:gap-5">
+          <div className="flex items-center gap-3 md:gap-4">
+            {/* Language Selector Dropdown */}
+            <LanguageSelector variant="glass" />
+
             {/* Search */}
             <button
               onMouseEnter={() => setHoveredAction('search')}
@@ -312,7 +320,7 @@ export default function SmartCropDashboard() {
                 transition={{ type: 'spring', stiffness: 350, damping: 30 }}
                 className="overflow-hidden whitespace-nowrap text-xs font-semibold text-[#1B1E19]"
               >
-                Alerts
+                {t('alerts', 'Alerts')}
               </motion.span>
             </button>
 
@@ -343,7 +351,7 @@ export default function SmartCropDashboard() {
                   transition={{ type: 'spring', stiffness: 350, damping: 30 }}
                   className="overflow-hidden whitespace-nowrap text-xs font-semibold text-[#1B1E19]"
                 >
-                  Profile
+                  {t('profile', 'Profile')}
                 </motion.span>
               </button>
             </Link>
@@ -369,8 +377,8 @@ export default function SmartCropDashboard() {
             style={{ letterSpacing: '-0.02em' }}
             className="text-5xl md:text-7xl leading-[1.05] tracking-tight mb-6"
           >
-            <span className="font-medium text-[#1B1E19]">Protect your crop</span><br />
-            <span className="font-light text-[#1B1E19]">before risk becomes loss</span>
+            <span className="font-medium text-[#1B1E19]">{t('hero_title_1', 'Protect your crop')}</span><br />
+            <span className="font-light text-[#1B1E19]">{t('hero_title_2', 'before risk becomes loss')}</span>
           </motion.h1>
           <motion.p 
             initial={{ opacity: 0, y: 20 }}
@@ -379,7 +387,7 @@ export default function SmartCropDashboard() {
             style={{ letterSpacing: '-0.01em' }}
             className="text-lg text-[#1B1E19] font-semibold mb-10 max-w-lg"
           >
-            AI-powered crop monitoring, distress prediction, and personalized farming guidance.
+            {t('hero_subtitle', 'AI-powered crop monitoring, distress prediction, and personalized farming guidance.')}
           </motion.p>
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
@@ -389,12 +397,12 @@ export default function SmartCropDashboard() {
           >
             <Link href="/crop-monitoring">
               <button className="whitespace-nowrap px-8 py-4 rounded-full bg-[#1B1E19] text-[#F7F8F4] font-medium flex items-center gap-2 hover:bg-black transition-colors shadow-lg shadow-black/10">
-                View Farm Health
+                {t('view_farm_health', 'View Farm Health')}
               </button>
             </Link>
             <Link href="/crop-monitoring">
               <button className="whitespace-nowrap px-8 py-4 rounded-full bg-white/60 backdrop-blur-xl border border-black/10 font-medium text-[#1B1E19] flex items-center gap-2 hover:bg-white/80 transition-colors shadow-lg shadow-black/5">
-                Explore Advisory <ArrowRight size={18} />
+                {t('explore_advisory', 'Explore Advisory')} <ArrowRight size={18} />
               </button>
             </Link>
             <button
@@ -402,7 +410,7 @@ export default function SmartCropDashboard() {
               className={`whitespace-nowrap px-6 py-4 rounded-full font-medium flex items-center gap-2 transition-colors shadow-lg shadow-black/10 ${isSharingLocation ? 'bg-red-500 text-white hover:bg-red-600' : 'bg-white text-[#1B1E19] hover:bg-gray-50'}`}
             >
               <Navigation size={18} className={isSharingLocation ? 'animate-pulse' : ''} />
-              {isSharingLocation ? 'Stop Sharing Location' : 'Share Live Location'}
+              {isSharingLocation ? t('stop_sharing_location', 'Stop Sharing Location') : t('share_live_location', 'Share Live Location')}
             </button>
           </motion.div>
         </div>
@@ -414,7 +422,7 @@ export default function SmartCropDashboard() {
           transition={{ delay: 0.8, duration: 0.6 }}
           className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-xs font-semibold uppercase tracking-widest text-[#1B1E19]/70"
         >
-          <span>Scroll to explore</span>
+          <span>{t('scroll_to_explore', 'Scroll to explore')}</span>
           <motion.div 
             animate={{ y: [0, 6, 0] }}
             transition={{ repeat: Infinity, duration: 1.6, ease: "easeInOut" }}
@@ -450,8 +458,8 @@ export default function SmartCropDashboard() {
                   </div>
                 </div>
                 <div>
-                  <p className="text-lg font-semibold text-[#1B1E19]">Farm Health</p>
-                  <p className="text-sm text-[#6B6F63]">Index score</p>
+                  <p className="text-lg font-semibold text-[#1B1E19]">{t('farm_health_score', 'Farm Health')}</p>
+                  <p className="text-sm text-[#6B6F63]">{t('index_score', 'Index score')}</p>
                 </div>
               </div>
               <div>
@@ -483,13 +491,13 @@ export default function SmartCropDashboard() {
                   </div>
                 </div>
                 <div>
-                  <p className="text-lg font-semibold text-[#1B1E19]">NDVI</p>
-                  <p className="text-sm text-[#6B6F63]">vs 30-day avg</p>
+                  <p className="text-lg font-semibold text-[#1B1E19]">{t('ndvi_status', 'NDVI')}</p>
+                  <p className="text-sm text-[#6B6F63]">{t('vs_30_day_avg', 'vs 30-day avg')}</p>
                 </div>
               </div>
               <div>
                 <p className="text-6xl md:text-7xl font-bold text-[#1B1E19] tracking-tight" style={{ fontVariantNumeric: 'tabular-nums' }}>↓18<span className="text-4xl text-[#6B6F63]">%</span></p>
-                <p className="mt-3 text-base font-semibold text-[#E4572E]">Requires attention</p>
+                <p className="mt-3 text-base font-semibold text-[#E4572E]">{t('requires_attention', 'Requires attention')}</p>
               </div>
             </div>
           </motion.div>
@@ -516,13 +524,13 @@ export default function SmartCropDashboard() {
                   </div>
                 </div>
                 <div>
-                  <p className="text-lg font-semibold text-[#1B1E19]">Advisory</p>
+                  <p className="text-lg font-semibold text-[#1B1E19]">{t('monitoring', 'Advisory')}</p>
                   <p className="text-sm text-[#6B6F63]">Action needed</p>
                 </div>
               </div>
               <div>
-                <p className="text-4xl md:text-5xl font-semibold text-[#1B1E19] tracking-tight leading-tight">Delay<br/>irrigation</p>
-                <p className="mt-3 text-base font-semibold text-blue-600">Rain expected today</p>
+                <p className="text-4xl md:text-5xl font-semibold text-[#1B1E19] tracking-tight leading-tight">{t('advisory_action', 'Delay irrigation')}</p>
+                <p className="mt-3 text-base font-semibold text-blue-600">{t('rain_expected', 'Rain expected today')}</p>
               </div>
             </div>
           </motion.div>
@@ -550,13 +558,13 @@ export default function SmartCropDashboard() {
                   </div>
                 </div>
                 <div>
-                  <p className="text-lg font-semibold text-[#1B1E19]">Risk Level</p>
-                  <p className="text-sm font-semibold text-red-600">High Risk</p>
+                  <p className="text-lg font-semibold text-[#1B1E19]">{t('risk_level', 'Risk Level')}</p>
+                  <p className="text-sm font-semibold text-red-600">{t('high_risk', 'High Risk')}</p>
                 </div>
               </div>
               <div>
                 <div className="text-6xl md:text-7xl font-bold text-[#1B1E19] tracking-tight leading-none mb-3" style={{ fontVariantNumeric: 'tabular-nums' }}>81<span className="text-4xl text-[#6B6F63]">/100</span></div>
-                <p className="text-base font-medium text-[#6B6F63]">Rainfall 35% below normal</p>
+                <p className="text-base font-medium text-[#6B6F63]">{t('rainfall_deficit', 'Rainfall 35% below normal')}</p>
               </div>
             </div>
           </motion.div>

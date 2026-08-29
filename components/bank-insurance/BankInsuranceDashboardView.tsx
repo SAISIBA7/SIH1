@@ -6,8 +6,11 @@ import {
   Landmark, ShieldCheck, TrendingUp, AlertTriangle, ArrowLeft, 
   FileText, Users, DollarSign, ExternalLink, Plus
 } from 'lucide-react';
+import LanguageSelector from '@/components/LanguageSelector';
+import { useLanguage } from '@/lib/language-context';
 
 export default function BankInsuranceDashboardView() {
+  const { t } = useLanguage();
   const [data, setData] = useState<any>(null);
 
   useEffect(() => {
@@ -24,21 +27,22 @@ export default function BankInsuranceDashboardView() {
       <div className="max-w-6xl mx-auto space-y-6">
         
         {/* Navigation Top Bar */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between relative z-[999] overflow-visible">
           <Link 
             href="/dashboard" 
             className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/80 backdrop-blur-md border border-black/10 shadow-sm text-sm font-medium hover:bg-white transition"
           >
             <ArrowLeft className="w-4 h-4" />
-            Farmer Portal
+            <span>{t('farmer_profile', 'Farmer Portal')}</span>
           </Link>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
+            <LanguageSelector variant="glass" />
             <Link
               href="/bank-portal/facilities/add"
               className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#1A1A1A] text-[#CFE362] text-xs font-bold shadow-sm hover:bg-black transition"
             >
               <Plus className="w-3.5 h-3.5" />
-              <span>Add Credit Facility</span>
+              <span>{t('create_facility', 'Add Credit Facility')}</span>
             </Link>
           </div>
         </div>

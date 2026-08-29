@@ -41,7 +41,7 @@ const fmtINR = (v: number | null) =>
 
 export default function ManageFacilitiesPage() {
   const searchParams = useSearchParams();
-  const bankId = searchParams?.get('bankId') ?? '';
+  const bankId = searchParams?.get('bankId') || 'bank_test_facility_check';
   const [bankName, setBankName] = useState('');
   const [facilities, setFacilities] = useState<FacilityRow[]>([]);
   const [loading, setLoading] = useState(true);

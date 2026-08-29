@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle2, Sprout, ShieldCheck } from 'lucide-react';
 import { useUser } from '@clerk/nextjs';
+import LanguageSelector from '@/components/LanguageSelector';
 import Logo from './components/Logo';
 import LoginForm from './components/LoginForm';
 import RoleSelector from './components/RoleSelector';
@@ -153,9 +154,10 @@ export default function AuthenticationPage() {
       {/* Main Glass Card */}
       <div className="relative z-10 w-full max-w-md sm:max-w-[440px] my-auto">
         <div className="relative rounded-2xl bg-white/80 backdrop-blur-xl border border-white/60 shadow-2xl shadow-slate-950/30 p-6 sm:p-7 text-center transition-all duration-300">
-          {/* Logo & Header */}
-          <div className="mb-4">
+          {/* Top Bar with Language Selector */}
+          <div className="flex items-center justify-between mb-4 relative z-[999] overflow-visible">
             <Logo size={currentView === 'login' ? 'md' : 'sm'} />
+            <LanguageSelector variant="compact" />
           </div>
 
           {/* Dynamic Animated Views */}
