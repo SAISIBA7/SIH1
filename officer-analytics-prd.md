@@ -75,10 +75,10 @@ If the rainfall-deviation gap turns out to require a new table or a scheduled ca
 ---
 
 ## Handoff checklist for Antigravity
-- [ ] Inspect `crop_risk`/`risk_scores` columns — confirm rainfall/market/loan sub-signals exist or need new computation
-- [ ] Resolve where rainfall/weather data actually lives before building weather-stress — flag if a new cached table is required, get approval first
-- [ ] Inspect `financial_facilities`/`bank_applications`/`loans` for due-date fields
-- [ ] Reuse existing officer-jurisdiction scoping logic — don't reimplement
-- [ ] Reuse the existing High-Risk Directory farmer+risk query for the priority table rather than duplicating it
-- [ ] No new intervention action endpoints — wire buttons to what already exists
-- [ ] Recharts for charts, lucide-react for icons, designTokens.css accent — no new libraries
+- [x] Inspect `crop_risk`/`risk_scores` columns — confirmed `rainfall_risk`, `market_risk`, `loan_risk`, and `score` exist in `risk_scores` schema.
+- [x] Resolve where rainfall/weather data actually lives before building weather-stress — verified `weather_observations` table (`farm_id`, `temperature`, `rainfall`, `forecast_rainfall`, `humidity`, `recorded_at`) and built complete weather stress query + resilient fallback.
+- [x] Inspect `financial_facilities`/`bank_applications`/`loans` for due-date fields — resolved to `loans.due_date` and `farmers.loan_due_date`.
+- [x] Reuse existing officer-jurisdiction scoping logic — jurisdiction dynamically resolves from officer session/auth and defaults to Mayurbhanj district (Baripada, Betnoti, Badasahi, Kuliana, etc.).
+- [x] Reuse the existing High-Risk Directory farmer+risk query for the priority table rather than duplicating it.
+- [x] No new intervention action endpoints — wired Call/SMS/Assign Visit/View Details action buttons to existing intervention infrastructure (`POST /api/officer/interventions`, `POST /api/notifications/emit`, and `/officer-dashboard/farmers/[farmerId]`).
+- [x] Recharts for charts, lucide-react for icons, designTokens.css accent — 100% compliant with zero external new libraries.

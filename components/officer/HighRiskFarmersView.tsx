@@ -1,16 +1,22 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { 
   ArrowLeft, Search, Filter, AlertTriangle, Phone, MapPin, 
   ChevronRight, ShieldAlert, ArrowUpDown, UserCheck, CheckCircle2
 } from 'lucide-react';
 
-export default function HighRiskFarmersView() {
+function HighRiskFarmersContent() {
+  const searchParams = useSearchParams();
+  const initialRisk = searchParams.get('risk') || searchParams.get('riskLevel') || 'all';
+  const initialBlock = searchParams.get('block') || '';
+  const initialQuery = searchParams.get('q') || '';
+
   const [farmers, setFarmers] = useState<any[]>([]);
-  const [search, setSearch] = useState('');
-  const [filterRisk, setFilterRisk] = useState('all');
+  const [search, setSearch] = useState(initialBlock || initialQuery);
+  const [filterRisk, setFilterRisk] = useState(initialRisk);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -18,7 +24,7 @@ export default function HighRiskFarmersView() {
       .then(res => res.json())
       .then(data => {
         if (data.success) {
-          setFarmers(data.data);
+          setFarmers(data.data || data.farmers || []);
         }
       })
       .catch(console.error)
@@ -185,5 +191,17 @@ export default function HighRiskFarmersView() {
 
       </div>
     </div>
+  );
+}
+
+export default function HighRiskFarmersView() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-[#F2F2EF] p-8 flex items-center justify-center font-sans">
+        <div className="w-8 h-8 border-3 border-neutral-300 border-t-neutral-900 rounded-full animate-spin mx-auto" />
+      </div>
+    }>
+      <HighRiskFarmersContent />
+    </Suspense>
   );
 }

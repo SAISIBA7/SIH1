@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Bar, ComposedChart } from 'recharts';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Bar, ComposedChart, ReferenceLine } from 'recharts';
 
 interface TrendData {
   date: string;
@@ -70,6 +70,14 @@ export function DistressTrendChart({ data, loading, insight }: Props) {
             <Tooltip 
               contentStyle={{ backgroundColor: 'rgba(0,0,0,0.8)', borderColor: 'rgba(255,255,255,0.2)', borderRadius: '8px', color: '#fff' }}
               itemStyle={{ color: '#fff' }}
+            />
+            <ReferenceLine 
+              yAxisId="left" 
+              y={70} 
+              stroke="#ef4444" 
+              strokeDasharray="4 4" 
+              strokeWidth={1.5}
+              label={{ value: 'Critical Distress (>70)', fill: '#f87171', fontSize: 11, position: 'insideTopLeft' }} 
             />
             <Bar yAxisId="right" dataKey="highRiskCount" name="High Risk Count" fill="rgba(255,255,255,0.2)" radius={[4, 4, 0, 0]} barSize={20} />
             <Area 
