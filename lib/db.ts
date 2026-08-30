@@ -269,15 +269,79 @@ export async function initDatabase(): Promise<boolean> {
         CREATE TABLE IF NOT EXISTS notifications (
           id VARCHAR(64) PRIMARY KEY,
           user_id VARCHAR(64) NOT NULL,
-          title VARCHAR(255) NOT NULL,
-          message TEXT NOT NULL,
+          farmer_id VARCHAR(64),
+          type VARCHAR(50),
           category VARCHAR(50) DEFAULT 'ALERT',
           priority VARCHAR(20) DEFAULT 'HIGH',
-          is_read BOOLEAN DEFAULT FALSE,
+          title VARCHAR(255) NOT NULL,
+          message TEXT NOT NULL,
+          body JSON,
+          voice_text TEXT,
+          language VARCHAR(10) DEFAULT 'en',
+          action_label VARCHAR(100),
           action_url VARCHAR(255),
+          action_status VARCHAR(50) DEFAULT 'not_required',
+          source_feature VARCHAR(100),
+          source_entity_id VARCHAR(100),
+          correlation_id VARCHAR(100),
+          is_read BOOLEAN DEFAULT FALSE,
+          read_at DATETIME,
+          channel VARCHAR(50) DEFAULT 'IN_APP',
+          status VARCHAR(50) DEFAULT 'PENDING',
+          provider VARCHAR(50),
+          provider_message_id VARCHAR(100),
+          risk_score INT,
+          reason TEXT,
+          retry_count INT DEFAULT 0,
+          last_error TEXT,
+          sent_at DATETIME,
+          delivered_at DATETIME,
+          failed_at DATETIME,
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
       `);
+
+      // Ensure new columns are present if table already existed
+      try {
+        await connection.query(`
+          ALTER TABLE notifications 
+          ADD COLUMN channel VARCHAR(50) DEFAULT 'IN_APP',
+          ADD COLUMN status VARCHAR(50) DEFAULT 'PENDING',
+          ADD COLUMN provider VARCHAR(50),
+          ADD COLUMN provider_message_id VARCHAR(100),
+          ADD COLUMN risk_score INT,
+          ADD COLUMN reason TEXT,
+          ADD COLUMN retry_count INT DEFAULT 0,
+          ADD COLUMN last_error TEXT,
+          ADD COLUMN sent_at DATETIME,
+          ADD COLUMN delivered_at DATETIME,
+          ADD COLUMN failed_at DATETIME;
+        `);
+      } catch (e: any) {
+        if (e.code !== 'ER_DUP_FIELDNAME') {
+          console.warn('[Database] Alter table notifications (SMS columns) warning:', e.message);
+        }
+      }
+      try {
+        await connection.query(`
+          ALTER TABLE notifications 
+          ADD COLUMN farmer_id VARCHAR(64),
+          ADD COLUMN type VARCHAR(50),
+          ADD COLUMN body JSON,
+          ADD COLUMN voice_text TEXT,
+          ADD COLUMN language VARCHAR(10) DEFAULT 'en',
+          ADD COLUMN action_label VARCHAR(100),
+          ADD COLUMN action_status VARCHAR(50) DEFAULT 'not_required',
+          ADD COLUMN source_feature VARCHAR(100),
+          ADD COLUMN source_entity_id VARCHAR(100),
+          ADD COLUMN correlation_id VARCHAR(100),
+          ADD COLUMN read_at DATETIME;
+        `);
+      } catch (e: any) {
+        if (e.code !== 'ER_DUP_FIELDNAME') {
+          console.warn('[Database] Alter table notifications (Base columns) warning:', e.message);
+        }
+      }
 
       return true;
     } finally {
