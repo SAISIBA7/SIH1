@@ -25,11 +25,20 @@ export default function HighRiskFarmersView() {
       .finally(() => setLoading(false));
   }, []);
 
-  const filteredFarmers = farmers.filter(f => {
-    const matchesSearch = f.name.toLowerCase().includes(search.toLowerCase()) || 
-                          f.village.toLowerCase().includes(search.toLowerCase()) ||
-                          f.crop.toLowerCase().includes(search.toLowerCase());
-    const matchesFilter = filterRisk === 'all' ? true : f.riskLevel.toLowerCase() === filterRisk.toLowerCase();
+  const filteredFarmers = farmers.filter((f) => {
+    const q = search.toLowerCase().trim();
+    const matchesSearch =
+      !q ||
+      (f.name && f.name.toLowerCase().includes(q)) ||
+      (f.farmerId && f.farmerId.toLowerCase().includes(q)) ||
+      (f.id && f.id.toLowerCase().includes(q)) ||
+      (f.village && f.village.toLowerCase().includes(q)) ||
+      (f.block && f.block.toLowerCase().includes(q)) ||
+      (f.crop && f.crop.toLowerCase().includes(q)) ||
+      (f.primaryReason && f.primaryReason.toLowerCase().includes(q));
+
+    const matchesFilter =
+      filterRisk === 'all' ? true : f.riskLevel?.toLowerCase() === filterRisk.toLowerCase();
     return matchesSearch && matchesFilter;
   });
 

@@ -6,9 +6,9 @@ import { useLanguage } from "@/lib/language-context";
 import { smartCropAuth } from "@/lib/smartcrop-auth";
 
 const navItems = [
-  { key: "command_center", defaultName: "Command Center", icon: Home },
+  { key: "command_center", defaultName: "Command Center", icon: Home, href: "/agriculture-officer-dashboard" },
   { key: "high_risk_farmers", defaultName: "High Risk Farmers", icon: AlertTriangle, href: "/officer-dashboard/farmers" },
-  { key: "distress_map", defaultName: "Distress Map", icon: MapPin },
+  { key: "distress_map", defaultName: "Distress Map", icon: MapPin, href: "/admin/dashboard" },
   { key: "analytics", defaultName: "Analytics", icon: BarChart2 },
   { key: "alerts", defaultName: "Alerts", icon: Bell, href: "/notifications" },
   { key: "farmer_database", defaultName: "Farmer Database", icon: Database, href: "/officer-dashboard/farmers" },

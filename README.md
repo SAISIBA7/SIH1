@@ -6,16 +6,17 @@
 [![Tailwind CSS](https://img.shields.io/badge/TailwindCSS-v4-38B2AC?style=flat-square&logo=tailwind-css)](https://tailwindcss.com/)
 [![AWS RDS](https://img.shields.io/badge/AWS-RDS_MySQL-orange?style=flat-square&logo=amazon-aws)](https://aws.amazon.com/rds/)
 [![Sarvam AI](https://img.shields.io/badge/Sarvam_AI-Indic_NLP-purple?style=flat-square)](https://www.sarvam.ai/)
+[![Multilingual](https://img.shields.io/badge/Languages-22+_Indic_Languages-emerald?style=flat-square)](https://translate.google.com/)
 
-**SmartCrop** is an enterprise-grade agricultural intelligence, climate risk mitigation, farm credit enablement, and government monitoring ecosystem built for the **Smart India Hackathon (SIH)**. The platform bridges the gap between **Smallholder Farmers**, **Agriculture Extension Officers**, **Institutional Banks / Insurers**, and **Government Policy Makers**.
+**SmartCrop** is an enterprise-grade agricultural intelligence, climate distress prediction, farm credit facilitation, and government monitoring platform built for the **Smart India Hackathon (SIH)**. The ecosystem seamlessly integrates four critical stakeholder domains: **Smallholder Farmers**, **Agriculture Extension Officers / Administrators**, **Institutional Banks / Insurers**, and **Government Policy Makers**.
 
 ---
 
 ## 📑 Table of Contents
 
-- [Core Value Proposition & User Roles](#-core-value-proposition--user-roles)
+- [Core Stakeholder Portals](#-core-stakeholder-portals)
+- [Multilingual & Real-Time Translation System](#-multilingual--real-time-translation-system)
 - [Security, Middleware & Authentication Architecture](#-security-middleware--authentication-architecture)
-- [Multilingual & AI Engine (Sarvam AI)](#-multilingual--ai-engine-sarvam-ai)
 - [Application Routes & Navigation Directory](#-application-routes--navigation-directory)
 - [Backend REST API Endpoints](#-backend-rest-api-endpoints)
 - [System Architecture & Technology Stack](#-system-architecture--technology-stack)
@@ -27,40 +28,72 @@
 
 ---
 
-## 🎯 Core Value Proposition & User Roles
+## 🎯 Core Stakeholder Portals
 
 ### 🧑‍🌾 1. Farmer Portal
-- **Real-Time Farm Dashboard**: Weather observations, soil moisture/temperature telemetry, active crop lifecycle tracking, and localized alerts.
-- **AI-Driven Crop Health & Risk Engine**: Multi-factor risk scoring (pest, drought, flood, nutrient deficiency) with prescriptive mitigation strategies.
-- **Crop Monitoring & Phenology Calendar**: Stage-by-stage growth timeline, irrigation reminders, and daily agronomy task checklist.
-- **Alternative Crop Recommendation**: AI recommendation engine suggesting climate-resilient alternative crops tailored to soil chemistry and monsoon predictions.
-- **Live Mandi Rates**: Real-time APMC commodity prices and trend charts across Odisha and national markets.
-- **Custom Hiring Center (CHC) Equipment Hub**: Tractor, Harvester, Drone, and implement rentals with instant booking.
-- **Financial Facilities & KCC Loans**: Direct discovery, interest subvention calculator, and 1-click application submission.
+- **Real-Time Farm Dashboard**: Live weather observation, soil moisture/temperature telemetry, active crop lifecycle tracking, and localized danger alerts.
+- **AI Crop Health & Distress Engine**: Multi-factor risk scoring (pest attacks, drought, excessive precipitation, soil nutrient deficits) with prescriptive remedies.
+- **Crop Monitoring & Phenology Calendar**: Stage-by-stage crop calendar, irrigation schedule optimization, and daily agronomy tasks.
+- **Climate-Resilient Alternative Crops**: AI recommendation engine suggesting optimal alternative crops based on soil chemistry and regional monsoon forecasts.
+- **Live Mandi Rates**: Real-time APMC commodity price feeds and historical trend charts across Odisha and nationwide markets.
+- **Custom Hiring Center (CHC) Equipment Hub**: Tractors, Harvesters, Power Tillers, and Spraying Drones available for hourly/daily rental with instant booking.
+- **Financial Facilities & KCC Loans**: Direct discovery, interest subvention calculation, and 1-click loan applications.
 - **PMFBY Crop Insurance**: Policy matching, premium estimation, and insurance claim tracking.
-- **Farmer Profile Management**: Land parcel records, soil health card parameters, and quick Sign Out.
+- **Farmer Profile Management**: Land parcel records, soil health parameters, and one-click Sign Out.
 
-### 🧑‍💼 2. Agriculture Extension Officer Portal
-- **Agricultural Distress Command Center**: District-wide distress heatmap and high-stress farmer triage.
+### 🧑‍💼 2. Agriculture Extension Officer & Administrator Portal
+- **Agricultural Distress Command Center**: District distress heatmaps and high-stress farmer triage.
 - **Assigned Farmers Directory**: Geo-tagged farmer mapping with real-time risk stratification (High, Moderate, Low).
-- **Field Inspection & Interventions**: Schedule farm inspections, log crop diagnostics, trigger emergency advisories, and fast-track relief funds.
+- **Field Inspection & Interventions**: Schedule on-site farm visits, log diagnostic reports, trigger emergency advisories, and fast-track relief funds.
 
-### 🏦 3. Bank & Insurance Partner Portal
-- **Credit & Loan Facility Management**: Create, customize, and publish loan products with interest subvention details.
-- **Loan Applications Pipeline**: Review applicant risk profiles, land records, credit scores, and approve/reject loan requests.
+### 🏦 3. Bank & Financial Partner Portal
+- **Credit & Loan Facility Management**: Create, customize, publish, draft, or suspend agricultural loan products with interest subvention details.
+- **Loan Applications Pipeline**: Review applicant risk profiles, land records, creditworthiness scores, and approve/reject loan requests.
 - **Institutional Risk & Insurance Dashboard**: Underwriting metrics, active policy tracking, and PMFBY claim adjudication.
 
-### 🏛️ 4. Government & Administrative Console
+### 🏛️ 4. Government & CHC Administration Console
 - **Regional Macro Analytics**: District and state-level crop distribution, yield projections, and stress indices.
 - **CHC Equipment Allocation**: Public machinery pool management and custom hiring center dispatching.
 - **Scheme Impact Assessment**: Direct Benefit Transfer (DBT) fund disbursement tracking and subsidy delivery auditing.
 
 ---
 
+## 🌐 Multilingual & Real-Time Translation System
+
+SmartCrop features a hybrid, low-latency multilingual engine designed for rural accessibility across all 22+ Scheduled Indian Languages:
+
+### 1. Dual-Layer Translation Architecture
+- **Layer 1: Instant Client UI Dictionary**: Pre-compiled translation dictionary (`UI_DICTIONARY` in [`lib/language-context.tsx`](lib/language-context.tsx)) for zero-latency instant rendering of navigational elements, labels, buttons, and headings.
+- **Layer 2: Real-Time Full-DOM Google Translate Engine**: Automatic full-page DOM translation powered by Google Translate runtime scripts in [`app/layout.tsx`](app/layout.tsx), translating dynamic text, cards, tables, modals, and descriptions in real time.
+- **Layer 3: Indic Neural NLP (Sarvam AI)**: Server-side machine translation (`/api/translate`) and natural Text-to-Speech voice synthesis (`/api/sarvam`) for conversational AI agronomist advisory.
+
+### 2. Supported Languages (22+ Indian Languages + English)
+| Code | Language | Native Name | Code | Language | Native Name |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| `en` | English | English | `hi` | Hindi | हिन्दी |
+| `or` | Odia | ଓଡ଼ିଆ | `bn` | Bengali | বাংলা |
+| `te` | Telugu | తెలుగు | `ta` | Tamil | தமிழ் |
+| `mr` | Marathi | मराठी | `gu` | Gujarati | ગુજરાતી |
+| `pa` | Punjabi | ਪੰਜਾਬੀ | `kn` | Kannada | ಕನ್ನಡ |
+| `ml` | Malayalam | മലയാളം | `as` | Assamese | অসমীয়া |
+| `ur` | Urdu | اردو | `ne` | Nepali | नेपाली |
+| `sa` | Sanskrit | संस्कृतम् | `mai`| Maithili | मैथिली |
+| `sd` | Sindhi | सिन्धी / سنڌي | `ks` | Kashmiri | कॉशुर / کٲشُر |
+| `kok`| Konkani | कोंकणी | `mni`| Manipuri | ꯃꯤꯇꯩꯂꯣꯟ |
+| `brx`| Bodo | बर' | `doi`| Dogri | डोगरी |
+| `sat`| Santali | ᱥᱟᱱᱛᱟᱲᱤ | — | — | — |
+
+### 3. Persistent Global Switcher & Cross-Page State
+- **Global Floating Switcher**: Accessible from any page via `<LanguageSelector variant="floating" />` pinned at the bottom-right corner.
+- **In-Navbar Switchers**: Inlined glassmorphic dropdowns in Farmer, Officer, and Bank headers.
+- **Cross-Route Persistence**: Active language choice is saved in `localStorage` and `googtrans` cookies, automatically applying when navigating between **Farmer**, **Administrator**, **Bank**, and **Government** portals.
+
+---
+
 ## 🛡️ Security, Middleware & Authentication Architecture
 
 ### 1. Role-Based Access Control (RBAC) & Next.js Proxy Middleware
-Protected routes are strictly enforced via the root Next.js proxy middleware ([`proxy.ts`](file:///c:/Users/sugud/OneDrive/Documents/SIH/proxy.ts)) compatible with Next.js 16.3.2 Turbopack:
+Protected routes are strictly enforced via the root Next.js proxy middleware ([`proxy.ts`](proxy.ts)) compatible with Next.js 16.3.2 Turbopack:
 
 | Path Prefix | Minimum Required Role | Unauthenticated Behavior | Unauthorized Role Behavior |
 | :--- | :--- | :--- | :--- |
@@ -76,22 +109,14 @@ Protected routes are strictly enforced via the root Next.js proxy middleware ([`
 
 ---
 
-## 🌐 Multilingual & AI Engine (Sarvam AI)
-
-SmartCrop provides comprehensive Indic language support across all UI interfaces and conversational advisory bots:
-- **Languages Supported**: 22 Scheduled Indian Languages including **English**, **Hindi (हिन्दी)**, **Odia (ଓଡ଼ିଆ)**, **Bengali (বাংলা)**, **Telugu (తెలుగు)**, **Tamil (தமிழ்)**, **Marathi (मराठी)**, **Gujarati (ગુજરાતી)**, and **Punjabi (ਪੰਜਾਬੀ)**.
-- **Sarvam AI Gateway**: Native REST integration ([`lib/sarvam-ai.ts`](file:///c:/Users/sugud/OneDrive/Documents/SIH/lib/sarvam-ai.ts)) for Indic machine translation (`/api/translate`) and natural text-to-speech voice generation (`/api/sarvam`).
-
----
-
 ## 🗺️ Application Routes & Navigation Directory
 
 ### 🌐 1. Public & Discovery Pages
 | Route | URL Link | Description |
 | :--- | :--- | :--- |
-| **Landing / Home** | `http://localhost:3000/` | Interactive product overview & ecosystem entry |
-| **Authentication** | `http://localhost:3000/authentication` | Unified Sign in & Registration with role picker |
-| **Farmer Onboarding** | `http://localhost:3000/onboarding` | Step-by-step land parcel, soil, and crop registration |
+| **Landing / Home** | `http://localhost:3000/` | Interactive product overview & ecosystem entry (redirects to `/dashboard`) |
+| **Authentication** | `http://localhost:3000/authentication` | Unified Sign In & Registration with role selection |
+| **Farmer Onboarding** | `http://localhost:3000/onboarding` | Step-by-step land parcel, soil, and crop onboarding |
 | **Mandi Market Rates** | `http://localhost:3000/market` | Live APMC mandi commodity prices & trend charts |
 | **Government Schemes** | `http://localhost:3000/schemes` | Central & State agricultural subsidy directory |
 | **Scheme Detail** | `http://localhost:3000/schemes/pm-kisan` | Dynamic subsidy milestone checklist & eligibility |
@@ -116,18 +141,21 @@ SmartCrop provides comprehensive Indic language support across all UI interfaces
 | **Crop Insurance** | `http://localhost:3000/insurance` | PMFBY policy matching, claims & premium calculator |
 | **Notifications** | `http://localhost:3000/notifications` | Real-time weather warnings & credit alerts |
 
-### 🧑‍💼 3. Agriculture Officer & Government Portals *(Requires `administrator`)*
+### 🧑‍💼 3. Agriculture Officer & Administrator Portal *(Requires `administrator`)*
 | Route | URL Link | Description |
 | :--- | :--- | :--- |
+| **Admin Route Connector**| `http://localhost:3000/admin` | Quick redirect to active administrator dashboard |
 | **Admin Command Center**| `http://localhost:3000/admin/dashboard` | District distress heatmap & high-risk triage |
 | **Officer Dashboard** | `http://localhost:3000/agriculture-officer-dashboard` | Field officer workspace & advisory broadcaster |
 | **District Overview** | `http://localhost:3000/officer-dashboard` | Block-wise monitoring across Mayurbhanj |
 | **High-Risk Directory** | `http://localhost:3000/officer-dashboard/farmers` | Distress scores, crop status & intervention tools |
+| **Government Route** | `http://localhost:3000/government` | Quick redirect to government administration hub |
 | **Government CHC Hub** | `http://localhost:3000/government/dashboard` | State machinery allocation & DBT subsidy stats |
 
 ### 🏦 4. Bank Partner Portal *(Requires `bank` or `administrator`)*
 | Route | URL Link | Description |
 | :--- | :--- | :--- |
+| **Bank Route Connector** | `http://localhost:3000/bank` | Quick redirect to bank dashboard |
 | **Bank Portal** | `http://localhost:3000/bank-portal` | Bank partner landing & quick actions |
 | **Bank Dashboard** | `http://localhost:3000/bank-portal/dashboard` | Credit portfolio overview & verification badge |
 | **Credit Facilities** | `http://localhost:3000/bank-portal/facilities` | Manage, publish, draft or suspend credit schemes |
@@ -154,7 +182,7 @@ SmartCrop provides comprehensive Indic language support across all UI interfaces
 - `GET /api/equipment` — Custom Hiring Center (CHC) equipment inventory
 - `POST /api/equipment/[id]/book` — Book machinery rental slot
 
-### 🤖 AI Advisory & Indic NLP (Sarvam AI)
+### 🤖 AI Advisory & Indic NLP (Sarvam AI & Google Translate)
 - `POST /api/ai/chat` — Conversational multilingual agricultural assistant
 - `POST /api/ai/risk-explanation` — Natural language risk diagnostic generator
 - `POST /api/ai/alternative-crop` — Recommendation engine for alternate crops
@@ -186,6 +214,7 @@ SmartCrop provides comprehensive Indic language support across all UI interfaces
 ┌────────────────────────────────────────────────────────────────────────┐
 │               Frontend: Next.js 16 (Turbopack) + React 19              │
 │       Tailwind CSS v4 • Framer Motion • Lucide Icons • Recharts        │
+│       Global Floating Language Switcher • Realtime Translation Engine  │
 └───────────────────────────────────┬────────────────────────────────────┘
                                     │
                          (Next.js Proxy Middleware)
@@ -198,8 +227,8 @@ SmartCrop provides comprehensive Indic language support across all UI interfaces
                 │                   │                    │
                 ▼                   ▼                    ▼
 ┌───────────────────────┐ ┌───────────────────┐ ┌────────────────────────┐
-│  AWS RDS MySQL Pool   │ │   Sarvam AI API   │ │   InsForge BaaS        │
-│  (Connection Manager) │ │ (Indic NLP & TTS) │ │ (Realtime & Gateway)   │
+│  AWS RDS MySQL Pool   │ │   Sarvam AI API   │ │   Google Translate     │
+│  (Connection Manager) │ │ (Indic NLP & TTS) │ │ (Full-DOM Translation) │
 └───────────────────────┘ └───────────────────┘ └────────────────────────┘
 ```
 
@@ -209,6 +238,7 @@ SmartCrop provides comprehensive Indic language support across all UI interfaces
 - **Motion & Micro-interactions**: [Framer Motion](https://www.framer.com/motion/)
 - **Database Engine**: [AWS RDS MySQL](https://aws.amazon.com/rds/) via singleton connection pool (`mysql2/promise`)
 - **Indic NLP Gateway**: [Sarvam AI](https://www.sarvam.ai/) REST API
+- **Translation Runtime**: Google Translate API + Custom React Localization Context
 - **State Management**: [Zustand](https://zustand-demo.pmnd.rs/) & React Context
 
 ---
@@ -236,10 +266,11 @@ The system utilizes structured relational tables in AWS RDS MySQL (`sih` databas
 ```text
 SIH/
 ├── app/                                # Next.js App Router (Pages & API Handlers)
-│   ├── admin/dashboard/                # Admin Distress Command Center
+│   ├── admin/                          # Admin Routes (/admin & /admin/dashboard)
 │   ├── agriculture-officer-dashboard/  # Officer Dashboard View
 │   ├── alternative-crop/               # AI Alternate Crop Recommendation Page
 │   ├── authentication/                 # Login & Registration Portal
+│   ├── bank/                           # Bank Route Connector (/bank & /bank/dashboard)
 │   ├── bank-insurance/dashboard/       # Bank & Insurance Console
 │   ├── bank-portal/                    # Bank Portal, Facilities & Registration
 │   ├── crop-details/                   # Crop Analytics & Calendar Page
@@ -249,7 +280,7 @@ SIH/
 │   ├── farmer-profile/                 # Farmer Profile Management
 │   ├── financial-support/              # Loan & Grant Applications
 │   ├── full-crop-guide/                # Agricultural Manual
-│   ├── government/dashboard/           # Policy & Regional CHC Analytics
+│   ├── government/                     # Government Routes (/government & /government/dashboard)
 │   ├── insurance/                      # Crop Insurance Portal
 │   ├── market/                         # Mandi Market Rates
 │   ├── notifications/                  # Alerts & Notification Center
@@ -260,7 +291,7 @@ SIH/
 │   ├── schemes/                        # Government Schemes Hub & Dynamic Details
 │   ├── unauthorized/                   # Security Access Control Warning View
 │   ├── api/                            # Backend REST Route Handlers
-│   ├── layout.tsx                      # Root Application Layout
+│   ├── layout.tsx                      # Root Application Layout (Google Translate & Global Switcher)
 │   └── page.tsx                        # Home / Landing Page
 │
 ├── Bank Portal/                        # Bank UI Components & Modular Views
@@ -271,7 +302,8 @@ SIH/
 │   ├── farmer/                         # Farmer Management Components
 │   ├── government/                     # Government Hub Components
 │   ├── officer/                        # Officer Inspection Views
-│   └── LanguageSelector.tsx            # Indic Language Switcher Dropdown
+│   ├── LanguageSelector.tsx            # Global Floating & Inlined Language Selector
+│   └── TopLanguageBar.tsx              # Top Language Bar Component
 ├── farmer deshboard/                   # Core Farmer Dashboard Visuals & Navbar
 ├── farmer profile/                     # Farmer Profile Views & Task Manager
 ├── Crop Details/                       # Crop Calendar & Health Metrics
@@ -279,7 +311,7 @@ SIH/
 │   ├── db.ts                           # AWS RDS MySQL Connection Pool (Singleton)
 │   ├── smartcrop-auth.ts               # Client Auth & Role Utilities
 │   ├── sarvam-ai.ts                    # Sarvam AI REST Client (Translation & TTS)
-│   └── language-context.tsx            # Multilingual Localization Engine
+│   └── language-context.tsx            # Multilingual Localization Engine & Route Sync
 ├── scripts/                            # Verification & Diagnostic Test Scripts
 ├── public/                             # Static Assets, Icons & Images
 ├── proxy.ts                            # Next.js 16 Security & RBAC Middleware
