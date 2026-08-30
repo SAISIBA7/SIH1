@@ -1,0 +1,8 @@
+node_modules
+.next
+.git
+.gitignore
+*.pem
+.env*
+.insforge
+README.md
