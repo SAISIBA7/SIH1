@@ -19,13 +19,11 @@ export const metadata: Metadata = {
   description: "AI-Powered Farm Intelligence, Crop Advisory, Mandi Prices and Financial Support.",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
-  const content = (
-    <LanguageProvider>
-      {children}
-    </LanguageProvider>
-  );
+const publishableKey =
+  process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY ||
+  "pk_test_YXNzdXJlZC1hbGllbi01OTgxLmNsZXJrLmFjY291bnRzLmRldiQ";
 
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html
       lang="en"
@@ -33,11 +31,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col font-sans">
-        {process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY ? (
-          <ClerkProvider>{content}</ClerkProvider>
-        ) : (
-          content
-        )}
+        <ClerkProvider publishableKey={publishableKey}>
+          <LanguageProvider>
+            {children}
+          </LanguageProvider>
+        </ClerkProvider>
       </body>
     </html>
   );
